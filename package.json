@@ -1,0 +1,17 @@
+{
+  "name": "cookforme",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.2",
+    "turbo": "^2.9.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.8"
+  }
+}
