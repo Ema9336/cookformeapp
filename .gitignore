@@ -5,4 +5,5 @@ dist
 build
 .DS_Store
 .vscode
-*.log
+*.logcd apps/web
+npm install @react-google-maps/api
