@@ -13,23 +13,36 @@ const getMapCenter = (chefs: MockChef[]) =>
 
 interface ChefMapProps {
   chefs: MockChef[];
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-export default function ChefMap({ chefs }: ChefMapProps) {
+export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
+
+  const mapCenter = userLocation || getMapCenter(chefs);
 
   if (!isLoaded) return <div>Loading Map...</div>;
 
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={getMapCenter(chefs)}
+      center={mapCenter}
       zoom={12}
     >
+      {userLocation && (
+        <Marker
+          position={userLocation}
+          title="You are here"
+          icon={{
+            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            scaledSize: { width: 40, height: 40 },
+          }}
+        />
+      )}
       {chefs.map((chef) => (
         <Marker
           key={chef.id}

@@ -1,7 +1,27 @@
+"use client";
+
 import ChefMap from "../components/ChefMap";
-import { mockChefs } from "../lib/mockChefs";
+import { mockChefs, MockChef } from "../lib/mockChefs";
+import { useUserLocation } from "../hooks/useUserLocation";
+import { calcDistanceMiles } from "../utils/calcDistance";
 
 export default function HomePage() {
+  const { location: userLocation, loading, error, retry } = useUserLocation();
+
+  // Calculate and sort chefs by distance
+  const chefsWithDistance = userLocation
+    ? mockChefs.map((chef) => {
+        const distance = calcDistanceMiles(
+          userLocation.lat,
+          userLocation.lng,
+          chef.lat,
+          chef.lng
+        );
+        return { ...chef, distance };
+      })
+      .sort((a, b) => a.distance - b.distance)
+    : mockChefs.map((chef) => ({ ...chef, distance: null }));
+
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
       <nav className="flex items-center justify-between px-10 py-6 border-b border-gray-200 dark:border-gray-800">
@@ -38,14 +58,37 @@ export default function HomePage() {
           </div>
         </div>
 
-        <ChefMap chefs={mockChefs} />
+        <ChefMap chefs={chefsWithDistance} userLocation={userLocation} />
       </section>
-      {/* Cards using mockChefs */}
+      {/* Cards using chefsWithDistance */}
       <section className="max-w-7xl mx-auto px-10 pb-24">
         <h3 className="text-3xl font-semibold mb-8">Popular Near You</h3>
-
+        {loading && <div>Loading your location...</div>}
+        {error && (
+          <div className="text-red-500 flex items-center gap-2">
+            {error}
+            <button
+              className="ml-2 px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-sm"
+              onClick={retry}
+            >
+              Retry Location
+            </button>
+          </div>
+        )}
+        {/* Warn if using fallback location */}
+        {userLocation && userLocation.lat === 42.3601 && userLocation.lng === -71.0589 && !loading && !error && (
+          <div className="text-yellow-600 dark:text-yellow-400 mb-4">
+            Showing results near Boston (default). Allow location access for more accurate results.
+            <button
+              className="ml-2 px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-sm"
+              onClick={retry}
+            >
+              Retry Location
+            </button>
+          </div>
+        )}
         <div className="grid md:grid-cols-3 gap-8">
-          {mockChefs.map((chef) => (
+          {chefsWithDistance.map((chef) => (
             <div
               key={chef.id}
               className="rounded-3xl border border-gray-200 dark:border-gray-800 p-5"
@@ -57,7 +100,9 @@ export default function HomePage() {
               <p className="text-gray-500 dark:text-gray-400 mt-2">
                 {chef.category} &ndash; {chef.location}, {chef.city}
               </p>
-              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">{chef.distance} away</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+                {chef.distance !== null ? `${chef.distance.toFixed(1)} mi away` : ""}
+              </p>
             </div>
           ))}
         </div>
