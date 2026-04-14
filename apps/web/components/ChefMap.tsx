@@ -15,7 +15,7 @@ interface ChefMapProps {
   chefs: MockChef[];
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyC3tycYBUXxeAvIjwb4ERN8KJ3UzZRU7t0';
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 export default function ChefMap({ chefs }: ChefMapProps) {
   const { isLoaded } = useJsApiLoader({
