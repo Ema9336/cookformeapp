@@ -10,17 +10,20 @@ export default function HomePage() {
 
   // Calculate and sort chefs by distance
   const chefsWithDistance = userLocation
-    ? mockChefs.map((chef) => {
-        const distance = calcDistanceMiles(
-          userLocation.lat,
-          userLocation.lng,
-          chef.lat,
-          chef.lng
-        );
-        return { ...chef, distance };
-      })
-      .sort((a, b) => a.distance - b.distance)
-    : mockChefs.map((chef) => ({ ...chef, distance: null }));
+    ? mockChefs
+        .map((chef) => {
+          const distance = calcDistanceMiles(
+            userLocation.lat,
+            userLocation.lng,
+            chef.lat,
+            chef.lng
+          );
+          return { ...chef, distance: distance.toFixed(1) + " mi" };
+        })
+        .sort((a, b) =>
+          parseFloat(a.distance) - parseFloat(b.distance)
+        )
+    : mockChefs;
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
@@ -101,7 +104,7 @@ export default function HomePage() {
                 {chef.category} &ndash; {chef.location}, {chef.city}
               </p>
               <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
-                {chef.distance !== null ? `${chef.distance.toFixed(1)} mi away` : ""}
+                {chef.distance ? chef.distance : ""}
               </p>
             </div>
           ))}

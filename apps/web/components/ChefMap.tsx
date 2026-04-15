@@ -39,7 +39,9 @@ export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
           title="You are here"
           icon={{
             url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            scaledSize: { width: 40, height: 40 },
+            scaledSize: typeof window !== 'undefined' && window.google && window.google.maps
+              ? new window.google.maps.Size(40, 40)
+              : undefined,
           }}
         />
       )}
