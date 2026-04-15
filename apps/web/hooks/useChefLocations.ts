@@ -10,10 +10,10 @@ const CHEF_OFFSETS = mockChefs.map((chef) => ({
   lngOffset: chef.lng - BOSTON_CENTER.lng,
 }));
 
-async function waitForGeocoder(retries = 10): Promise<boolean> {
+async function waitForGeocoder(retries = 20): Promise<boolean> {
   for (let i = 0; i < retries; i++) {
     if (typeof window !== "undefined" && window.google?.maps?.Geocoder) return true;
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 150));
   }
   return false;
 }
