@@ -10,43 +10,53 @@ const CHEF_OFFSETS = mockChefs.map((chef) => ({
   lngOffset: chef.lng - BOSTON_CENTER.lng,
 }));
 
+async function waitForGeocoder(retries = 10): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    if (typeof window !== "undefined" && window.google?.maps?.Geocoder) return true;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  return false;
+}
+
 async function reverseGeocode(
   lat: number,
-  lng: number,
-  apiKey: string
+  lng: number
 ): Promise<{ location: string; city: string; state: string }> {
-  try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
-    );
-    const data = await res.json();
-    if (data.status !== "OK" || !data.results.length) {
-      return { location: "Nearby", city: "", state: "" };
+  const ready = await waitForGeocoder();
+  return new Promise((resolve) => {
+    if (!ready) {
+      resolve({ location: "Nearby", city: "", state: "" });
+      return;
     }
-    const components = data.results[0].address_components;
-    let location = "";
-    let city = "";
-    let state = "";
-    for (const comp of components) {
-      if (
-        !location &&
-        (comp.types.includes("neighborhood") ||
-          comp.types.includes("sublocality_level_1") ||
-          comp.types.includes("sublocality"))
-      ) {
-        location = comp.long_name;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status !== "OK" || !results || !results.length) {
+        resolve({ location: "Nearby", city: "", state: "" });
+        return;
       }
-      if (comp.types.includes("locality")) {
-        city = comp.long_name;
+      const components = results[0].address_components;
+      let location = "";
+      let city = "";
+      let state = "";
+      for (const comp of components) {
+        if (
+          !location &&
+          (comp.types.includes("neighborhood") ||
+            comp.types.includes("sublocality_level_1") ||
+            comp.types.includes("sublocality"))
+        ) {
+          location = comp.long_name;
+        }
+        if (comp.types.includes("locality")) {
+          city = comp.long_name;
+        }
+        if (comp.types.includes("administrative_area_level_1")) {
+          state = comp.short_name;
+        }
       }
-      if (comp.types.includes("administrative_area_level_1")) {
-        state = comp.short_name;
-      }
-    }
-    return { location: location || city, city, state };
-  } catch {
-    return { location: "Nearby", city: "", state: "" };
-  }
+      resolve({ location: location || city, city, state });
+    });
+  });
 }
 
 export function useChefLocations(
@@ -60,8 +70,6 @@ export function useChefLocations(
       return;
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-
     // Compute offset positions relative to user's location
     const offsetChefs = mockChefs.map((chef, i) => ({
       ...chef,
@@ -74,7 +82,7 @@ export function useChefLocations(
     // Reverse geocode each position for real neighborhood/city names
     Promise.all(
       offsetChefs.map(async (chef) => {
-        const geoInfo = await reverseGeocode(chef.lat, chef.lng, apiKey);
+        const geoInfo = await reverseGeocode(chef.lat, chef.lng);
         return { ...chef, ...geoInfo };
       })
     ).then(setChefs);
