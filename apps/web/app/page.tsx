@@ -1,16 +1,17 @@
 "use client";
 
 import ChefMap from "../components/ChefMap";
-import { mockChefs, MockChef } from "../lib/mockChefs";
 import { useUserLocation } from "../hooks/useUserLocation";
+import { useChefLocations } from "../hooks/useChefLocations";
 import { calcDistanceMiles } from "../utils/calcDistance";
 
 export default function HomePage() {
   const { location: userLocation, loading, error, retry } = useUserLocation();
+  const dynamicChefs = useChefLocations(userLocation);
 
   // Calculate and sort chefs by distance
   const chefsWithDistance = userLocation
-    ? mockChefs
+    ? dynamicChefs
         .map((chef) => {
           const distance = calcDistanceMiles(
             userLocation.lat,
@@ -23,7 +24,7 @@ export default function HomePage() {
         .sort((a, b) =>
           parseFloat(a.distance) - parseFloat(b.distance)
         )
-    : mockChefs;
+    : dynamicChefs;
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">

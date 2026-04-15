@@ -25,8 +25,13 @@ export function useUserLocation(defaultLocation: UserLocation = { lat: 42.3601, 
         setLoading(false);
       },
       (err) => {
-        console.error("Geolocation error:", err);
-        setError(`Location error: ${err.message}`);
+        const messages: Record<number, string> = {
+          1: "Location access denied. Allow location in your browser settings.",
+          2: "Your location could not be determined.",
+          3: "Location request timed out.",
+        };
+        const msg = messages[err.code] || "Unable to get your location.";
+        setError(msg);
         setLocation(defaultLocation);
         setLoading(false);
       }
