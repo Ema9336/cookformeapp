@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { mockChefs } from "../../../lib/mockChefs";
+import { useUserLocation } from "../../../hooks/useUserLocation";
+import { useChefLocations } from "../../../hooks/useChefLocations";
+import { calcDistanceMiles } from "../../../utils/calcDistance";
 
 export default function ChefDetailPage() {
   const params = useParams();
-  const chef = mockChefs.find((c) => c.slug === params.slug);
+  const { location: userLocation } = useUserLocation();
+  const dynamicChefs = useChefLocations(userLocation);
 
-  if (!chef) {
+  const baseChef = mockChefs.find((c) => c.slug === params.slug);
+  if (!baseChef) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white dark:bg-black text-black dark:text-white">
         <div className="text-center">
@@ -19,6 +24,14 @@ export default function ChefDetailPage() {
       </main>
     );
   }
+
+  const dynamicChef = dynamicChefs.find((c) => c.slug === params.slug) || baseChef;
+  const distance = userLocation
+    ? calcDistanceMiles(userLocation.lat, userLocation.lng, dynamicChef.lat, dynamicChef.lng).toFixed(1) + " mi"
+    : baseChef.distance;
+  const location = dynamicChef.location || baseChef.location;
+  const city = dynamicChef.city || baseChef.city;
+  const chef = { ...baseChef, location, city, distance };
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
