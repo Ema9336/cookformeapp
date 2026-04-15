@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import ChefMap from "../components/ChefMap";
 import { useUserLocation } from "../hooks/useUserLocation";
 import { useChefLocations } from "../hooks/useChefLocations";
@@ -93,9 +94,10 @@ export default function HomePage() {
         )}
         <div className="grid md:grid-cols-3 gap-8">
           {chefsWithDistance.map((chef) => (
-            <div
+            <Link
               key={chef.id}
-              className="rounded-3xl border border-gray-200 dark:border-gray-800 p-5"
+              href={`/chef/${chef.slug}`}
+              className="block rounded-3xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-lg transition-shadow"
             >
               <div className="h-56 rounded-2xl bg-gray-200 dark:bg-zinc-900 mb-4 flex items-center justify-center overflow-hidden">
                 <img src={chef.image} alt={chef.name} className="object-cover h-full w-full rounded-2xl" />
@@ -107,7 +109,7 @@ export default function HomePage() {
               <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
                 {chef.distance ? chef.distance : ""}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
