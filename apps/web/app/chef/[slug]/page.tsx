@@ -17,6 +17,9 @@ export default function ChefDetailPage() {
   const [stickyVisible, setStickyVisible] = useState(false);
   const [cart, setCart] = useState<{ item: MenuItem; qty: number }[]>([]);
   const [drawerItem, setDrawerItem] = useState<MenuItem | null>(null);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [messageSent, setMessageSent] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -195,6 +198,53 @@ export default function ChefDetailPage() {
         </div>
       )}
 
+      {/* Message drawer */}
+      {messageOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMessageOpen(false)} />
+          <div className="relative bg-white dark:bg-zinc-900 rounded-t-3xl z-10 p-6 space-y-4">
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-2" />
+            {messageSent ? (
+              <div className="flex flex-col items-center py-8 gap-3">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center text-3xl">✉️</div>
+                <h3 className="text-2xl font-bold">Message Sent!</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center">{chef.name} will get back to you within {chef.responseTime.replace("Responds ", "").replace("Responds", "")}.</p>
+                <button
+                  onClick={() => setMessageOpen(false)}
+                  className="mt-2 w-full bg-green-600 text-white py-4 rounded-2xl font-semibold text-lg"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800 flex items-center justify-center text-lg">👨‍🍳</div>
+                  <div>
+                    <p className="font-semibold">{chef.name}</p>
+                    <p className="text-xs text-gray-400">{chef.responseTime}</p>
+                  </div>
+                </div>
+                <textarea
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder={`Hi ${chef.name.split(" ")[0]}, I'd love to learn more about your meals...`}
+                  rows={4}
+                  className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-zinc-800 p-4 text-base resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button
+                  onClick={() => { if (messageText.trim()) setMessageSent(true); }}
+                  disabled={!messageText.trim()}
+                  className="w-full bg-green-600 disabled:opacity-40 text-white py-4 rounded-2xl font-semibold text-lg"
+                >
+                  Send Message
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Sticky bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto flex gap-3">
@@ -206,7 +256,10 @@ export default function ChefDetailPage() {
               </span>
             )}
           </button>
-          <button className="rounded-2xl border border-gray-300 dark:border-gray-700 px-6 py-4 font-semibold">
+          <button
+            onClick={() => { setMessageOpen(true); setMessageSent(false); setMessageText(""); }}
+            className="rounded-2xl border border-gray-300 dark:border-gray-700 px-6 py-4 font-semibold"
+          >
             Message
           </button>
         </div>
