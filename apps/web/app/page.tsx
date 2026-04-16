@@ -119,72 +119,89 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-10 py-6 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-3xl font-bold">Cook For Me</h1>
-        <div className="flex items-center gap-4">
-          <button className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-700">
+      <nav className="flex items-center justify-between px-5 sm:px-10 py-4 sm:py-6 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-2xl sm:text-3xl font-bold">Cook For Me</h1>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full border border-gray-300 dark:border-gray-700">
             Login
           </button>
-          <Link href="/chef-onboarding" className="px-5 py-2 rounded-full bg-green-600 text-white">
+          <Link href="/chef-onboarding" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full bg-green-600 text-white whitespace-nowrap">
             Become a Chef
           </Link>
         </div>
       </nav>
 
       {/* Hero + Map */}
-      <section className="max-w-7xl mx-auto px-10 py-16 grid lg:grid-cols-2 gap-12">
+      <section className="max-w-7xl mx-auto px-5 sm:px-10 py-10 sm:py-16 grid lg:grid-cols-2 gap-8 sm:gap-12">
         <div>
-          <h2 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight">
             Home-cooked meals, weekly prep, and catering from trusted chefs near you.
           </h2>
-          <p className="mt-6 text-xl text-gray-600 dark:text-gray-300">
+          <p className="mt-4 sm:mt-6 text-base sm:text-xl text-gray-600 dark:text-gray-300">
             Search by chef name, cuisine, or dietary preference.
           </p>
 
           {/* Search bar */}
-          <div className="mt-8 flex gap-3">
-            <div className="relative flex-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-700 rounded-full pl-11 pr-5 py-4 bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                placeholder="Search chefs, cuisines, or dietary needs…"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white"
-                >
-                  ✕
-                </button>
-              )}
+          <div className="mt-6 sm:mt-8 space-y-2">
+            {/* Row 1: text search + filters button — always one line */}
+            <div className="flex gap-2">
+              <div className="relative flex-1 min-w-0">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">🔍</span>
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-full pl-10 sm:pl-11 pr-8 py-3 sm:py-4 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                  placeholder="Chefs, cuisines, dietary needs…"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black dark:hover:text-white text-sm"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className={`shrink-0 flex items-center gap-1.5 px-4 py-3 rounded-full border transition font-medium text-sm ${
+                  showFilters || hasActiveFilters
+                    ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
+                    : "border-gray-300 dark:border-gray-700 hover:border-gray-400"
+                }`}
+              >
+                <span>⚙️</span>
+                <span className="hidden sm:inline">Filters</span>
+                {hasActiveFilters && (
+                  <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center font-bold">
+                    {[activeCategory !== "All", activeTags.length > 0, maxDistance < 50].filter(Boolean).length}
+                  </span>
+                )}
+              </button>
             </div>
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={`flex items-center gap-2 px-5 py-4 rounded-full border transition font-medium text-sm ${
-                showFilters || hasActiveFilters
-                  ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
-                  : "border-gray-300 dark:border-gray-700 hover:border-gray-400"
-              }`}
-            >
-              <span>⚙️</span>
-              Filters
-              {hasActiveFilters && (
-                <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center font-bold">
-                  {[activeCategory !== "All", activeTags.length > 0, maxDistance < 50].filter(Boolean).length}
-                </span>
-              )}
-            </button>
+
+            {/* Row 2: delivery address + Search button — always one line */}
+            <div className="flex gap-2">
+              <div className="relative flex-1 min-w-0">
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">📍</span>
+                <input
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded-full pl-10 sm:pl-11 pr-4 py-3 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+                  placeholder="Delivery address or ZIP code"
+                />
+              </div>
+              <button className="shrink-0 bg-green-600 text-white px-5 sm:px-6 py-3 rounded-full text-sm font-semibold hover:bg-green-700 transition">
+                Search
+              </button>
+            </div>
           </div>
 
           {/* Category pills */}
-          <div className="mt-4 flex gap-2 flex-wrap">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-full border text-sm font-medium transition ${
+                className={`shrink-0 px-4 py-2 rounded-full border text-sm font-medium transition ${
                   activeCategory === cat
                     ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
                     : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-400"
@@ -277,10 +294,10 @@ export default function HomePage() {
       </section>
 
       {/* Results */}
-      <section className="max-w-7xl mx-auto px-10 pb-24">
+      <section className="max-w-7xl mx-auto px-5 sm:px-10 pb-24">
         {/* Results header */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-semibold">
+          <h3 className="text-xl sm:text-2xl font-semibold">
             {hasActiveFilters || searchQuery
               ? `${filteredChefs.length} result${filteredChefs.length !== 1 ? "s" : ""}`
               : "Popular Near You"}
@@ -336,7 +353,7 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-8">
             {filteredChefs.map((chef) => (
               <Link
                 key={chef.id}
