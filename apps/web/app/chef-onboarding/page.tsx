@@ -27,7 +27,7 @@ type FormData = {
   availability: { day: string; available: boolean }[];
   leadTimeDays: string;
   maxBookingsPerDay: string;
-  // Step 4 – Compliance
+  // Step 2 – Compliance
   licensedKitchen: boolean;
   kitchenType: "home" | "commercial" | "";
   foodHandlerCert: boolean;
@@ -36,6 +36,13 @@ type FormData = {
   rawBarPermit: boolean;
   shellfishCert: boolean;
   stateServed: string;
+  // Permit uploads (file names for display)
+  uploadFoodHandlerCert: string;
+  uploadInsurance: string;
+  uploadSeafoodPermit: string;
+  uploadRawBarPermit: string;
+  uploadShellfishCert: string;
+  uploadKitchenLicense: string;
 };
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -52,9 +59,9 @@ const SPECIALTY_OPTIONS = [
 
 const STEPS = [
   { label: "Profile", icon: "👨‍🍳" },
+  { label: "Compliance", icon: "⚖️" },
   { label: "Menu", icon: "🍽️" },
   { label: "Service", icon: "📍" },
-  { label: "Compliance", icon: "⚖️" },
   { label: "Publish", icon: "🚀" },
 ];
 
@@ -85,6 +92,12 @@ const defaultForm: FormData = {
   rawBarPermit: false,
   shellfishCert: false,
   stateServed: "",
+  uploadFoodHandlerCert: "",
+  uploadInsurance: "",
+  uploadSeafoodPermit: "",
+  uploadRawBarPermit: "",
+  uploadShellfishCert: "",
+  uploadKitchenLicense: "",
 };
 
 // ─── Reusable field components ────────────────────────────────────────────────
@@ -341,7 +354,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
   );
 }
 
-function Step2({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
+function Step3Menu({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
   return (
     <div className="space-y-8">
       <div>
@@ -373,7 +386,7 @@ function Step2({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
   );
 }
 
-function Step3({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
+function Step4Service({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
   const toggleDay = (day: string) =>
     setForm({
       ...form,
@@ -469,33 +482,95 @@ function Step3({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
   );
 }
 
-function Step4({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
+// ─── Upload button ────────────────────────────────────────────────────────────
+
+function UploadButton({
+  label,
+  fileName,
+  onUpload,
+  required = false,
+}: {
+  label: string;
+  fileName: string;
+  onUpload: (name: string) => void;
+  required?: boolean;
+}) {
+  const uploaded = Boolean(fileName);
+  return (
+    <label
+      className={`flex items-center justify-between gap-4 p-4 rounded-2xl border cursor-pointer transition ${
+        uploaded
+          ? "border-green-500 bg-green-50 dark:bg-green-950"
+          : "border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-zinc-900 hover:border-green-400"
+      }`}
+    >
+      <input
+        type="file"
+        className="hidden"
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={(e) => {
+          if (e.target.files?.[0]) onUpload(e.target.files[0].name);
+        }}
+      />
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-xl shrink-0">{uploaded ? "✅" : "📎"}</span>
+        <div className="min-w-0">
+          <p className={`text-sm font-medium truncate ${uploaded ? "text-green-700 dark:text-green-400" : ""}`}>
+            {label}
+            {required && !uploaded && <span className="text-red-400 ml-1">*</span>}
+          </p>
+          {uploaded ? (
+            <p className="text-xs text-green-600 dark:text-green-500 truncate">{fileName}</p>
+          ) : (
+            <p className="text-xs text-gray-400">PDF, JPG or PNG · tap to upload</p>
+          )}
+        </div>
+      </div>
+      {uploaded && (
+        <span className="shrink-0 text-xs text-green-600 font-semibold">Uploaded</span>
+      )}
+      {!uploaded && (
+        <span className="shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1">Upload</span>
+      )}
+    </label>
+  );
+}
+
+function Step2({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Compliance & Verification</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Required to operate legally in most states. This protects you and your customers.</p>
+        <h1 className="text-3xl font-bold">Compliance & Permits</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Required before your listing goes live. Upload your documents so we can verify them.</p>
       </div>
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950 p-4 text-sm text-amber-800 dark:text-amber-300">
-        ⚠️ Permit requirements vary by state. We'll verify your documents before your listing goes live.
+        ⚠️ Permit requirements vary by state. You can skip uploads now and submit them within 7 days of applying.
       </div>
 
+      <Field label="Primary State You Serve">
+        <Input
+          value={form.stateServed}
+          onChange={(v) => setForm({ ...form, stateServed: v })}
+          placeholder="e.g. Massachusetts"
+        />
+      </Field>
+
       <div className="space-y-3">
-        <h3 className="font-semibold text-base">Kitchen</h3>
+        <h3 className="font-semibold text-base">Kitchen Type</h3>
         <Toggle
           checked={form.licensedKitchen}
           onChange={(v) => setForm({ ...form, licensedKitchen: v })}
-          label="Licensed Kitchen"
-          description="I operate from a licensed/inspected kitchen"
+          label="Licensed / Inspected Kitchen"
+          description="I operate from a licensed kitchen"
         />
         {form.licensedKitchen && (
-          <div className="grid grid-cols-2 gap-3 pl-1">
+          <div className="grid grid-cols-2 gap-3">
             {(["home", "commercial"] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => setForm({ ...form, kitchenType: type })}
-                className={`py-3 rounded-2xl border text-sm font-medium capitalize transition ${
+                className={`py-3 rounded-2xl border text-sm font-medium transition ${
                   form.kitchenType === type
                     ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
                     : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-zinc-900"
@@ -505,6 +580,13 @@ function Step4({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
               </button>
             ))}
           </div>
+        )}
+        {form.licensedKitchen && (
+          <UploadButton
+            label="Kitchen License / Inspection Certificate"
+            fileName={form.uploadKitchenLicense}
+            onUpload={(name) => setForm({ ...form, uploadKitchenLicense: name })}
+          />
         )}
       </div>
 
@@ -516,43 +598,75 @@ function Step4({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
           label="Food Handler Certification"
           description="ServSafe or equivalent"
         />
+        {form.foodHandlerCert && (
+          <UploadButton
+            label="Food Handler Certificate"
+            fileName={form.uploadFoodHandlerCert}
+            onUpload={(name) => setForm({ ...form, uploadFoodHandlerCert: name })}
+            required
+          />
+        )}
         <Toggle
           checked={form.hasInsurance}
           onChange={(v) => setForm({ ...form, hasInsurance: v })}
           label="General Liability Insurance"
           description="Recommended for all chefs"
         />
+        {form.hasInsurance && (
+          <UploadButton
+            label="Certificate of Insurance (COI)"
+            fileName={form.uploadInsurance}
+            onUpload={(name) => setForm({ ...form, uploadInsurance: name })}
+          />
+        )}
       </div>
 
       <div className="space-y-3">
         <h3 className="font-semibold text-base">Seafood & Raw Bar Permits</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Only required if you serve seafood, raw bar, or shellfish.</p>
         <Toggle
           checked={form.seafoodPermit}
           onChange={(v) => setForm({ ...form, seafoodPermit: v })}
           label="Seafood Handling Permit"
           description="Required to sell/serve seafood commercially"
         />
+        {form.seafoodPermit && (
+          <UploadButton
+            label="Seafood Handling Permit"
+            fileName={form.uploadSeafoodPermit}
+            onUpload={(name) => setForm({ ...form, uploadSeafoodPermit: name })}
+            required
+          />
+        )}
         <Toggle
           checked={form.rawBarPermit}
           onChange={(v) => setForm({ ...form, rawBarPermit: v })}
           label="Raw Bar Permit"
           description="Required for oysters, clams, and raw shellfish"
         />
+        {form.rawBarPermit && (
+          <UploadButton
+            label="Raw Bar Permit"
+            fileName={form.uploadRawBarPermit}
+            onUpload={(name) => setForm({ ...form, uploadRawBarPermit: name })}
+            required
+          />
+        )}
         <Toggle
           checked={form.shellfishCert}
           onChange={(v) => setForm({ ...form, shellfishCert: v })}
           label="Shellfish Certification"
           description="State shellfish sanitation certification"
         />
+        {form.shellfishCert && (
+          <UploadButton
+            label="Shellfish Certification"
+            fileName={form.uploadShellfishCert}
+            onUpload={(name) => setForm({ ...form, uploadShellfishCert: name })}
+            required
+          />
+        )}
       </div>
-
-      <Field label="Primary State You Serve">
-        <Input
-          value={form.stateServed}
-          onChange={(v) => setForm({ ...form, stateServed: v })}
-          placeholder="e.g. Massachusetts"
-        />
-      </Field>
     </div>
   );
 }
@@ -716,8 +830,8 @@ export default function ChefOnboardingPage() {
       <div className="max-w-2xl mx-auto px-6 pt-8">
         {step === 1 && <Step1 form={form} setForm={setForm} />}
         {step === 2 && <Step2 form={form} setForm={setForm} />}
-        {step === 3 && <Step3 form={form} setForm={setForm} />}
-        {step === 4 && <Step4 form={form} setForm={setForm} />}
+        {step === 3 && <Step3Menu form={form} setForm={setForm} />}
+        {step === 4 && <Step4Service form={form} setForm={setForm} />}
         {step === 5 && <Step5 form={form} />}
       </div>
 
