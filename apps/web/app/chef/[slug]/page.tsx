@@ -62,6 +62,13 @@ export default function ChefDetailPage() {
 
   const cartTotal = cart.reduce((sum, c) => sum + c.qty, 0);
 
+  const checkoutHref = () => {
+    const cartData = cart.map((c) => ({ name: c.item.name, qty: c.qty, price: c.item.price }));
+    const qs = new URLSearchParams({ chef: chef.slug });
+    if (cartData.length > 0) qs.set("cart", encodeURIComponent(JSON.stringify(cartData)));
+    return `/checkout?${qs.toString()}`;
+  };
+
   const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => (
     <section>
       <h2 className="text-2xl font-semibold mb-3">{title}</h2>
@@ -93,7 +100,7 @@ export default function ChefDetailPage() {
       {/* Sticky Header on scroll */}
       <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
         <span className="font-semibold text-lg truncate">{chef.name}</span>
-        <button className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold shrink-0 ml-4">Book Now</button>
+        <Link href={checkoutHref()} className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold shrink-0 ml-4">Book Now</Link>
       </div>
 
       <div className="max-w-3xl mx-auto pb-36">
@@ -248,14 +255,14 @@ export default function ChefDetailPage() {
       {/* Sticky bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto flex gap-3">
-          <button className="flex-1 rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg relative">
+          <Link href={checkoutHref()} className="flex-1 rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg relative flex items-center justify-center">
             Book Now
             {cartTotal > 0 && (
               <span className="absolute -top-2 -right-2 bg-black dark:bg-white text-white dark:text-black text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
                 {cartTotal}
               </span>
             )}
-          </button>
+          </Link>
           <button
             onClick={() => { setMessageOpen(true); setMessageSent(false); setMessageText(""); }}
             className="rounded-2xl border border-gray-300 dark:border-gray-700 px-6 py-4 font-semibold"
