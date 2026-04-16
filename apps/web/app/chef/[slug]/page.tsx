@@ -97,6 +97,12 @@ export default function ChefDetailPage() {
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
 
+      {/* Always-visible top nav */}
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
+        <Link href="/" className="text-lg font-bold">Cook For Me</Link>
+        <Link href="/chef-onboarding" className="text-sm font-semibold px-4 py-2 rounded-full bg-green-600 text-white">Become a Chef</Link>
+      </div>
+
       {/* Sticky Header on scroll */}
       <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
         <span className="font-semibold text-lg truncate">{chef.name}</span>

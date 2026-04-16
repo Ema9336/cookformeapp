@@ -36,9 +36,9 @@ export default function HomePage() {
           <button className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-700">
             Login
           </button>
-          <button className="px-5 py-2 rounded-full bg-green-600 text-white">
+          <Link href="/chef-onboarding" className="px-5 py-2 rounded-full bg-green-600 text-white">
             Become a Chef
-          </button>
+          </Link>
         </div>
       </nav>
 
