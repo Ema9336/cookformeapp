@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getStateCompliance, US_STATES, type StateCompliance } from "@/lib/stateComplianceData";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -536,7 +537,138 @@ function UploadButton({
   );
 }
 
+// ─── State Compliance Card ────────────────────────────────────────────────────
+
+function StateComplianceCard({ data }: { data: StateCompliance }) {
+  return (
+    <div className="rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 p-5 space-y-4 text-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-bold text-base text-blue-900 dark:text-blue-200">{data.state} Requirements</p>
+          <p className="text-blue-700 dark:text-blue-400 text-xs mt-0.5">{data.regulatoryBody}</p>
+        </div>
+        <a
+          href={data.regulatoryBodyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-xs text-blue-600 dark:text-blue-400 underline font-medium"
+        >
+          Official site ↗
+        </a>
+      </div>
+
+      {/* Warning flags */}
+      {data.warningFlags.length > 0 && (
+        <div className="space-y-1.5">
+          {data.warningFlags.map((flag) => (
+            <div key={flag} className="rounded-xl bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 px-3 py-2 text-amber-800 dark:text-amber-300 text-xs">
+              {flag}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Key permits */}
+      <div className="grid grid-cols-1 gap-2">
+        {[
+          {
+            icon: "🏠",
+            label: data.foodServiceLicense.name,
+            status: data.foodServiceLicense.required ? "Required" : "Recommended",
+            required: data.foodServiceLicense.required,
+            notes: data.foodServiceLicense.notes,
+          },
+          {
+            icon: "📜",
+            label: "ServSafe Manager Certification",
+            status: data.serveSafeManager.required ? "Required" : "Not required",
+            required: data.serveSafeManager.required,
+            notes: data.serveSafeManager.notes,
+          },
+          {
+            icon: "🪪",
+            label: "Food Handler Card",
+            status: data.foodHandlerCard.required ? "Required" : "Not required",
+            required: data.foodHandlerCard.required,
+            notes: data.foodHandlerCard.notes,
+          },
+          {
+            icon: "🦪",
+            label: "Shellfish / Raw Bar Permit",
+            status: data.shellfish.requiresStatePermit ? "Required if serving shellfish" : "State permit not required",
+            required: data.shellfish.requiresStatePermit,
+            notes: data.shellfish.notes,
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className={`flex items-start gap-3 rounded-xl p-3 border ${
+              item.required
+                ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950"
+                : "border-gray-200 dark:border-gray-800 bg-white dark:bg-zinc-900"
+            }`}
+          >
+            <span className="text-base shrink-0">{item.icon}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-gray-900 dark:text-white text-xs">{item.label}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                    item.required
+                      ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+                      : "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {item.status}
+                </span>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 text-xs mt-1 leading-relaxed">{item.notes}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Cottage food note */}
+      <div className={`rounded-xl p-3 border text-xs ${
+        data.cottageFood.hotMealsAllowed
+          ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-300"
+          : "border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 text-gray-600 dark:text-gray-400"
+      }`}>
+        <span className="font-semibold">Cottage Food Law: </span>
+        {data.cottageFood.hotMealsAllowed
+          ? `✅ Hot meals allowed! `
+          : `❌ Hot meals NOT covered. `}
+        {data.cottageFood.salesLimit && `Sales limit: ${data.cottageFood.salesLimit}. `}
+        {data.cottageFood.notes}
+      </div>
+
+      {/* Ghost kitchen note */}
+      <div className="rounded-xl bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-900 p-3 text-xs text-purple-800 dark:text-purple-300">
+        <span className="font-semibold">Ghost Kitchen: </span>
+        {data.ghostKitchen.permitted ? "✅ Permitted — " : "❌ Not permitted — "}
+        {data.ghostKitchen.notes}
+      </div>
+
+      {/* Additional permits */}
+      {data.additionalPermits.length > 0 && (
+        <div>
+          <p className="font-semibold text-gray-700 dark:text-gray-300 text-xs mb-1.5">Additional Permits You May Need:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {data.additionalPermits.map((p) => (
+              <span key={p} className="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Step2({ form, setForm }: { form: FormData; setForm: (f: FormData) => void }) {
+  const complianceData = form.stateServed ? getStateCompliance(form.stateServed) : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -549,11 +681,28 @@ function Step2({ form, setForm }: { form: FormData; setForm: (f: FormData) => vo
       </div>
 
       <Field label="Primary State You Serve">
-        <Input
-          value={form.stateServed}
-          onChange={(v) => setForm({ ...form, stateServed: v })}
-          placeholder="e.g. Massachusetts"
-        />
+        <div className="space-y-3">
+          <select
+            value={form.stateServed}
+            onChange={(e) => setForm({ ...form, stateServed: e.target.value })}
+            className="w-full rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-zinc-900 p-4 text-base focus:outline-none focus:ring-2 focus:ring-green-500 transition appearance-none"
+          >
+            <option value="">Select your state…</option>
+            {US_STATES.map((s) => (
+              <option key={s.abbr} value={s.abbr}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Dynamic state compliance card */}
+          {complianceData && <StateComplianceCard data={complianceData} />}
+          {form.stateServed && !complianceData && (
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
+              Compliance data not found for this state. Please contact support.
+            </div>
+          )}
+        </div>
       </Field>
 
       <div className="space-y-3">

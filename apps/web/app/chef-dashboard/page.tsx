@@ -162,7 +162,7 @@ export default function ChefDashboardPage() {
         {/* Quick actions */}
         <div className="grid grid-cols-3 gap-3">
           <Link
-            href="/chef-onboarding"
+            href="/chef-profile-edit"
             className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black hover:border-green-400 transition text-center"
           >
             <span className="text-2xl">✏️</span>
