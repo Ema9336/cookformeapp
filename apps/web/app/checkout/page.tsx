@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const slug = searchParams.get("chef") || "coastal-prep-kitchen";
   const baseChef = mockChefs.find((c) => c.slug === slug) || mockChefs[0];
 
@@ -17,7 +18,6 @@ function CheckoutContent() {
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [allergies, setAllergies] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
   // Parse cart from URL
@@ -26,37 +26,18 @@ function CheckoutContent() {
     ? JSON.parse(decodeURIComponent(cartParam))
     : [];
 
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col items-center justify-center p-6 text-center gap-5">
-        <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center text-4xl">🎉</div>
-        <h1 className="text-3xl font-bold">Booking Request Sent!</h1>
-        <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-          {baseChef.name} has received your request and will confirm within{" "}
-          {baseChef.responseTime.replace("Responds ", "").replace("Responds", "")}.
-        </p>
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-5 w-full max-w-sm text-left space-y-2">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Booking summary</p>
-          <p className="font-semibold">{baseChef.name}</p>
-          {date && <p className="text-sm">{new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>}
-          <p className="text-sm capitalize">{serviceType} • {guestCount} {guestCount === 1 ? "person" : "people"}</p>
-          {cartItems.length > 0 && (
-            <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-              {cartItems.map((i) => (
-                <p key={i.name} className="text-sm">{i.qty}× {i.name}{i.price ? ` — ${i.price}` : ""}</p>
-              ))}
-            </div>
-          )}
-        </div>
-        <Link href="/" className="w-full max-w-sm rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg text-center block">
-          Back to Home
-        </Link>
-        <Link href={`/chef/${baseChef.slug}`} className="text-green-600 underline text-sm">
-          View chef profile
-        </Link>
-      </main>
-    );
-  }
+  const handleSubmit = () => {
+    if (!agreed || !date) return;
+    const bookingId = "CFM-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const qs = new URLSearchParams({
+      chef: baseChef.slug,
+      date,
+      service: serviceType,
+      guests: String(guestCount),
+      id: bookingId,
+    });
+    router.push(`/booking-confirmed?${qs.toString()}`);
+  };
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-36">
@@ -225,7 +206,7 @@ function CheckoutContent() {
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto">
           <button
-            onClick={() => { if (agreed && date) setSubmitted(true); }}
+            onClick={handleSubmit}
             disabled={!agreed || !date}
             className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
