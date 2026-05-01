@@ -9,6 +9,43 @@ import { useUserLocation } from "../../../hooks/useUserLocation";
 import { useChefLocations } from "../../../hooks/useChefLocations";
 import { calcDistanceMiles } from "../../../utils/calcDistance";
 
+function MenuSection({
+  title,
+  items,
+  onAdd,
+  onViewDetail,
+}: {
+  title: string;
+  items: MenuItem[];
+  onAdd: (item: MenuItem) => void;
+  onViewDetail: (item: MenuItem) => void;
+}) {
+  return (
+    <section>
+      <h2 className="text-2xl font-semibold mb-3">{title}</h2>
+      <div className="space-y-3">
+        {items.map((item) => (
+          <div key={item.name} className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex justify-between items-center">
+            <button className="text-left flex-1" onClick={() => onViewDetail(item)}>
+              <p className="font-medium">{item.name}</p>
+              {item.ingredients && (
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{item.ingredients}</p>
+              )}
+            </button>
+            <div className="flex items-center gap-3 ml-4">
+              {item.price && <span className="text-green-600 font-semibold text-sm whitespace-nowrap">{item.price}</span>}
+              <button
+                onClick={() => onAdd(item)}
+                className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold shrink-0"
+              >+</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function ChefDetailPage() {
   const params = useParams();
   const { location: userLocation } = useUserLocation();
@@ -68,31 +105,6 @@ export default function ChefDetailPage() {
     if (cartData.length > 0) qs.set("cart", encodeURIComponent(JSON.stringify(cartData)));
     return `/checkout?${qs.toString()}`;
   };
-
-  const MenuSection = ({ title, items }: { title: string; items: MenuItem[] }) => (
-    <section>
-      <h2 className="text-2xl font-semibold mb-3">{title}</h2>
-      <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.name} className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex justify-between items-center">
-            <button className="text-left flex-1" onClick={() => setDrawerItem(item)}>
-              <p className="font-medium">{item.name}</p>
-              {item.ingredients && (
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{item.ingredients}</p>
-              )}
-            </button>
-            <div className="flex items-center gap-3 ml-4">
-              {item.price && <span className="text-green-600 font-semibold text-sm whitespace-nowrap">{item.price}</span>}
-              <button
-                onClick={() => addToCart(item)}
-                className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold shrink-0"
-              >+</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
@@ -172,9 +184,9 @@ export default function ChefDetailPage() {
             </div>
           </section>
 
-          <MenuSection title="Popular Meals" items={chef.menu.meals} />
-          <MenuSection title="Weekly Plans" items={chef.menu.weekly} />
-          <MenuSection title="Catering Platters" items={chef.menu.catering} />
+          <MenuSection title="Popular Meals" items={chef.menu.meals} onAdd={addToCart} onViewDetail={setDrawerItem} />
+          <MenuSection title="Weekly Plans" items={chef.menu.weekly} onAdd={addToCart} onViewDetail={setDrawerItem} />
+          <MenuSection title="Catering Platters" items={chef.menu.catering} onAdd={addToCart} onViewDetail={setDrawerItem} />
 
         </div>
       </div>

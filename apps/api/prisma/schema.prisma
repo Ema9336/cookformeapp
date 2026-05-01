@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chef      Chef?
+  bookings  Booking[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Chef {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug         String   @unique
+  bio          String?
+  city         String?
+  state        String?
+  lat          Float?
+  lng          Float?
+  category     String?
+  tags         String?  // JSON array stored as string
+  image        String?
+  rating       Float    @default(0)
+  reviews      Int      @default(0)
+  startingPrice String?
+  responseTime String?
+  licensed     Boolean  @default(false)
+  distance     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings     Booking[]
+  menuItems    MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  chefId      String
+  chef        Chef     @relation(fields: [chefId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  ingredients String?  // JSON array stored as string
+  price       String?
+  category    String?
+  createdAt   DateTime @default(now())
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  customerId  String
+  customer    User          @relation(fields: [customerId], references: [id])
+  chefId      String
+  chef        Chef          @relation(fields: [chefId], references: [id])
+  date        DateTime
+  serviceType String
+  guestCount  Int
+  address     String?
+  notes       String?
+  allergies   String?
+  status      BookingStatus @default(PENDING)
+  totalAmount String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum Role {
+  CUSTOMER
+  CHEF
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  DECLINED
+}

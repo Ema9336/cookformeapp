@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import ChefMap from "../components/ChefMap";
 import { useUserLocation } from "../hooks/useUserLocation";
 import { useChefLocations } from "../hooks/useChefLocations";
 import { calcDistanceMiles } from "../utils/calcDistance";
+import { useAuth } from "../hooks/useAuth";
 
 // ─── Filter constants ─────────────────────────────────────────────────────────
 
@@ -29,6 +31,7 @@ type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 export default function HomePage() {
   const { location: userLocation, loading, error, retry } = useUserLocation();
   const dynamicChefs = useChefLocations(userLocation);
+  const { user, logout } = useAuth();
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,12 +125,33 @@ export default function HomePage() {
       <nav className="flex items-center justify-between px-5 sm:px-10 py-4 sm:py-6 border-b border-gray-200 dark:border-gray-800">
         <h1 className="text-2xl sm:text-3xl font-bold">Cook For Me</h1>
         <div className="flex items-center gap-2 sm:gap-4">
-          <button className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full border border-gray-300 dark:border-gray-700">
-            Login
-          </button>
-          <Link href="/chef-onboarding" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full bg-green-600 text-white whitespace-nowrap">
-            Become a Chef
-          </Link>
+          {user ? (
+            <>
+              <span className="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
+                Hi, {user.name.split(" ")[0]}
+              </span>
+              {user.role === "CHEF" && (
+                <Link href="/chef-dashboard" className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700">
+                  Dashboard
+                </Link>
+              )}
+              <button
+                onClick={() => logout()}
+                className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full border border-gray-300 dark:border-gray-700">
+                Login
+              </Link>
+              <Link href="/chef-onboarding" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full bg-green-600 text-white whitespace-nowrap">
+                Become a Chef
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -361,10 +385,12 @@ export default function HomePage() {
                 className="block rounded-3xl border border-gray-200 dark:border-gray-800 p-5 hover:shadow-lg hover:border-green-400 transition group"
               >
                 <div className="h-56 rounded-2xl bg-gray-200 dark:bg-zinc-900 mb-4 overflow-hidden">
-                  <img
+                  <Image
                     src={chef.image}
                     alt={chef.name}
-                    className="object-cover h-full w-full rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                    width={400}
+                    height={224}
+                    className="object-cover w-full h-full rounded-2xl group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
 

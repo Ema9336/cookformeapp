@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../../hooks/useAuth";
+import { bookingsApi } from "../../lib/api";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -84,16 +86,40 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ChefDashboardPage() {
+  const { accessToken } = useAuth();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "accepted" | "completed">("all");
   const [listingActive, setListingActive] = useState(true);
 
-  const accept = (id: string) =>
+  useEffect(() => {
+    if (!accessToken) return;
+    bookingsApi.chefBookings(accessToken).then((data) => {
+      const mapped = (data as Array<Record<string, unknown>>).map((b) => ({
+        id: String(b.id),
+        customer: (b.customer as { name?: string })?.name ?? "Customer",
+        item: String(b.serviceType ?? ""),
+        date: b.date ? new Date(String(b.date)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "",
+        servings: Number(b.guestCount ?? 1),
+        total: b.totalAmount ? "$" + Number(b.totalAmount).toFixed(0) : "—",
+        status: String(b.status ?? "pending").toLowerCase() as OrderStatus,
+        note: (b.notes as string) || (b.allergies as string) || undefined,
+      }));
+      if (mapped.length > 0) setOrders(mapped);
+    }).catch(() => {/* keep mock data on error */});
+  }, [accessToken]);
+
+  const accept = (id: string) => {
+    if (accessToken) bookingsApi.updateStatus(accessToken, id, "ACCEPTED").catch(() => {});
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "accepted" } : o)));
-  const decline = (id: string) =>
+  };
+  const decline = (id: string) => {
+    if (accessToken) bookingsApi.updateStatus(accessToken, id, "DECLINED").catch(() => {});
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "declined" } : o)));
-  const complete = (id: string) =>
+  };
+  const complete = (id: string) => {
+    if (accessToken) bookingsApi.updateStatus(accessToken, id, "COMPLETED").catch(() => {});
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "completed" } : o)));
+  };
 
   const filtered =
     activeTab === "all" ? orders : orders.filter((o) => o.status === activeTab);
@@ -255,7 +281,7 @@ export default function ChefDashboardPage() {
                 {/* Customer note */}
                 {order.note && (
                   <div className="rounded-xl bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 px-4 py-2.5 text-sm text-blue-700 dark:text-blue-300">
-                    💬 "{order.note}"
+                    💬 &ldquo;{order.note}&rdquo;
                   </div>
                 )}
 

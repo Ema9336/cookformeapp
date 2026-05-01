@@ -1,1 +1,22 @@
-git rm -r --cached node_modules
+# Dependencies
+node_modules/
+dist/
+
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env*.local
+
+# SQLite database file — contains real user data
+prisma/dev.db
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 
@@ -12,7 +12,8 @@ function BookingConfirmedContent() {
   const date = searchParams.get("date") || "";
   const service = searchParams.get("service") || "delivery";
   const guests = searchParams.get("guests") || "2";
-  const bookingId = searchParams.get("id") || "CFM-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  const [fallbackId] = useState(() => "CFM-" + Math.random().toString(36).slice(2, 8).toUpperCase());
+  const bookingId = searchParams.get("id") || fallbackId;
 
   const chef = mockChefs.find((c) => c.slug === slug) || mockChefs[0];
 

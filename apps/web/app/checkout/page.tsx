@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
+import { useAuth } from "../../hooks/useAuth";
+import { bookingsApi } from "../../lib/api";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { accessToken } = useAuth();
   const slug = searchParams.get("chef") || "coastal-prep-kitchen";
   const baseChef = mockChefs.find((c) => c.slug === slug) || mockChefs[0];
 
@@ -19,6 +22,8 @@ function CheckoutContent() {
   const [notes, setNotes] = useState("");
   const [allergies, setAllergies] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Parse cart from URL
   const cartParam = searchParams.get("cart");
@@ -26,17 +31,37 @@ function CheckoutContent() {
     ? JSON.parse(decodeURIComponent(cartParam))
     : [];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!agreed || !date) return;
-    const bookingId = "CFM-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-    const qs = new URLSearchParams({
-      chef: baseChef.slug,
-      date,
-      service: serviceType,
-      guests: String(guestCount),
-      id: bookingId,
-    });
-    router.push(`/booking-confirmed?${qs.toString()}`);
+    if (!accessToken) {
+      router.push(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const booking = await bookingsApi.create(accessToken, {
+        chefSlug: baseChef.slug,
+        date,
+        serviceType,
+        guestCount,
+        address,
+        notes,
+        allergies,
+      });
+      const qs = new URLSearchParams({
+        chef: baseChef.slug,
+        date,
+        service: serviceType,
+        guests: String(guestCount),
+        id: String(booking.id),
+      });
+      router.push(`/booking-confirmed?${qs.toString()}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit booking. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -205,12 +230,15 @@ function CheckoutContent() {
       {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto">
+          {error && (
+            <p className="text-center text-sm text-red-500 mb-2">{error}</p>
+          )}
           <button
             onClick={handleSubmit}
-            disabled={!agreed || !date}
+            disabled={!agreed || !date || submitting}
             className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
-            Submit Booking Request
+            {submitting ? "Submitting…" : "Submit Booking Request"}
           </button>
           {(!agreed || !date) && (
             <p className="text-center text-xs text-gray-400 mt-2">

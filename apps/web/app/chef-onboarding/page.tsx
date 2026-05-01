@@ -827,7 +827,7 @@ function Step5({ form }: { form: FormData }) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Ready to Publish 🚀</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Here's a preview of your listing. It will go live after a quick compliance review.</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Here&apos;s a preview of your listing. It will go live after a quick compliance review.</p>
       </div>
 
       {/* Preview card */}
@@ -895,7 +895,7 @@ function Step5({ form }: { form: FormData }) {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 p-4 text-sm text-blue-700 dark:text-blue-300">
-        📋 Our team will review your permits within 1–2 business days. You'll receive an email when your listing is live.
+        📋 Our team will review your permits within 1–2 business days. You&apos;ll receive an email when your listing is live.
       </div>
     </div>
   );
@@ -919,9 +919,9 @@ export default function ChefOnboardingPage() {
         <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center text-5xl mb-6">
           🎉
         </div>
-        <h1 className="text-4xl font-bold">You're submitted!</h1>
+        <h1 className="text-4xl font-bold">You&apos;re submitted!</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-sm">
-          <strong>{form.chefName || "Your listing"}</strong> is under review. We'll email you within 1–2 business days when you go live.
+          <strong>{form.chefName || "Your listing"}</strong> is under review. We&apos;ll email you within 1–2 business days when you go live.
         </p>
         <Link
           href="/"
