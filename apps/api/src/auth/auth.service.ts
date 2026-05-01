@@ -9,6 +9,7 @@ import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { Role } from '@prisma/client';
+import { EmailService } from '../notifications/email.service';
 
 const SALT_ROUNDS = 12;
 
@@ -23,6 +24,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -41,6 +43,9 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: { email: dto.email, name: dto.name, password: hashed, role },
     });
+
+    // Best effort: do not block signup if mail provider is down.
+    void this.emailService.sendWelcomeEmail(user.email, user.name, user.role);
 
     return this.issueTokens(user.id, user.email, user.role);
   }

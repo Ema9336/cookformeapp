@@ -111,6 +111,9 @@ model AnalyticsEvent {
   path      String?
   element   String?
   label     String?
+  country   String?
+  region    String?
+  city      String?
   sessionId String
   visitorId String?
   userId    String?

@@ -15,9 +15,11 @@ type AnalyticsSummary = {
     formSubmits: number;
     uniqueVisitors: number;
     uniqueSessions: number;
+      avgSessionDurationSec: number;
   };
   topPages: { path: string; count: number }[];
   topClicks: { label: string; count: number }[];
+  topCountries: { country: string; count: number }[];
 };
 
 type AnalyticsEvent = {
@@ -49,6 +51,12 @@ function toDateInputValue(date: Date) {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function formatDuration(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}m ${secs}s`;
 }
 
 export default function AdminAnalyticsPage() {
@@ -287,6 +295,10 @@ export default function AdminAnalyticsPage() {
             <p className="text-2xl font-bold">{summary?.totals.uniqueSessions ?? 0}</p>
             <p className="text-xs text-gray-500">Unique Sessions</p>
           </div>
+          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <p className="text-2xl font-bold">{formatDuration(summary?.totals.avgSessionDurationSec ?? 0)}</p>
+            <p className="text-xs text-gray-500">Avg Session Duration</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -321,6 +333,22 @@ export default function AdminAnalyticsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <h2 className="font-semibold mb-3">Top Countries</h2>
+          {(summary?.topCountries?.length ?? 0) === 0 ? (
+            <p className="text-sm text-gray-500">No geo data yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {summary?.topCountries.map((item) => (
+                <div key={item.country} className="flex items-center justify-between text-sm">
+                  <span className="truncate mr-3">{item.country}</span>
+                  <span className="font-semibold">{item.count}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">

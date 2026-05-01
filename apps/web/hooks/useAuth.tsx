@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { authApi, usersApi } from "../lib/api";
+import { trackAnalyticsEvent } from "../lib/analytics";
 
 type User = {
   id: string;
@@ -69,6 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, name: string, password: string) => {
     const { accessToken: at } = await authApi.register({ email, name, password });
     await applyTokens(at);
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: "register_success",
+      metadata: {
+        emailDomain: email.split("@")[1] ?? "",
+      },
+    });
   };
 
   const logout = async () => {

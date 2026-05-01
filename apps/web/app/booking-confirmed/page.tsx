@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
+import { trackAnalyticsEvent } from "../../lib/analytics";
 
 function BookingConfirmedContent() {
   const searchParams = useSearchParams();
@@ -32,6 +33,17 @@ function BookingConfirmedContent() {
         year: "numeric",
       })
     : null;
+
+  useEffect(() => {
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: "booking_confirmed_view",
+      metadata: {
+        chefSlug: slug,
+        service,
+      },
+    });
+  }, [service, slug]);
 
   return (
     <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white">

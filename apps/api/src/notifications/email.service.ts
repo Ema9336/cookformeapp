@@ -140,4 +140,37 @@ export class EmailService {
       this.logger.error(`Failed to send chef notification email: ${error.message}`);
     }
   }
+
+  async sendWelcomeEmail(
+    email: string,
+    name: string,
+    role: 'CUSTOMER' | 'CHEF' | 'ADMIN',
+  ) {
+    if (!this.transporter) {
+      this.logger.debug('Email service not configured, skipping welcome email');
+      return;
+    }
+
+    const from = this.config.get('SMTP_FROM') || 'noreply@cookformeapp.com';
+    const roleLabel = role === 'ADMIN' ? 'Admin' : role === 'CHEF' ? 'Chef' : 'Customer';
+
+    try {
+      await this.transporter.sendMail({
+        from,
+        to: email,
+        subject: 'Welcome to Cook For Me',
+        html: `
+          <h2>Welcome to Cook For Me!</h2>
+          <p>Hi ${name},</p>
+          <p>Your account has been created successfully.</p>
+          <p>Account type: <strong>${roleLabel}</strong></p>
+          <p>You can now log in and start using the platform.</p>
+          <p>Best regards,<br>Cook For Me Team</p>
+        `,
+      });
+      this.logger.log(`Welcome email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send welcome email: ${(error as Error).message}`);
+    }
+  }
 }

@@ -2,26 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { analyticsApi } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
-
-const VISITOR_KEY = "cf_visitor_id";
-const SESSION_KEY = "cf_session_id";
-
-function randomId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-function getOrCreateStorageId(key: string, storage: Storage) {
-  const existing = storage.getItem(key);
-  if (existing) return existing;
-  const id = randomId();
-  storage.setItem(key, id);
-  return id;
-}
+import { getAnalyticsIdentity, trackAnalyticsEvent } from "../lib/analytics";
 
 function textOrEmpty(value?: string | null, max = 300) {
   return (value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -42,22 +24,21 @@ export default function AnalyticsTracker() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    visitorIdRef.current = getOrCreateStorageId(VISITOR_KEY, window.localStorage);
-    sessionIdRef.current = getOrCreateStorageId(SESSION_KEY, window.sessionStorage);
+    const ids = getAnalyticsIdentity();
+    visitorIdRef.current = ids.visitorId;
+    sessionIdRef.current = ids.sessionId;
   }, []);
 
   useEffect(() => {
     if (!pathname || !sessionIdRef.current) return;
 
-    void analyticsApi.trackEvent({
+    trackAnalyticsEvent({
       eventType: "PAGE_VIEW",
       path: pathname,
-      referrer: typeof document !== "undefined" ? textOrEmpty(document.referrer, 400) : "",
-      sessionId: sessionIdRef.current,
-      visitorId: visitorIdRef.current,
       userId: user?.id,
-    }).catch(() => {
-      // Never block UX on analytics failures.
+      metadata: {
+        referrer: typeof document !== "undefined" ? textOrEmpty(document.referrer, 400) : "",
+      },
     });
   }, [pathname, user?.id]);
 
@@ -74,16 +55,12 @@ export default function AnalyticsTracker() {
         300,
       );
 
-      void analyticsApi.trackEvent({
+      trackAnalyticsEvent({
         eventType: "CLICK",
         path: pathname,
         element: elementDescriptor(clickable),
         label,
-        sessionId: sessionIdRef.current,
-        visitorId: visitorIdRef.current,
         userId: user?.id,
-      }).catch(() => {
-        // Never block UX on analytics failures.
       });
     };
 

@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 import { useAuth } from "../../hooks/useAuth";
 import { bookingsApi } from "../../lib/api";
+import { trackAnalyticsEvent } from "../../lib/analytics";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,16 @@ function CheckoutContent() {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: "checkout_view",
+      metadata: {
+        chefSlug: baseChef.slug,
+      },
+    });
+  }, [baseChef.slug]);
 
   // Parse cart from URL
   const cartParam = searchParams.get("cart");
@@ -48,6 +59,15 @@ function CheckoutContent() {
         address,
         notes,
         allergies,
+      });
+      trackAnalyticsEvent({
+        eventType: "FORM_SUBMIT",
+        label: "booking_submit_success",
+        metadata: {
+          chefSlug: baseChef.slug,
+          serviceType,
+          guestCount,
+        },
       });
       const qs = new URLSearchParams({
         chef: baseChef.slug,

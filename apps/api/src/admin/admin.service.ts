@@ -65,9 +65,11 @@ export class AdminService {
         },
       },
       select: {
+        createdAt: true,
         eventType: true,
         path: true,
         label: true,
+        country: true,
         visitorId: true,
         sessionId: true,
       },
@@ -82,6 +84,8 @@ export class AdminService {
 
     const pageCounts = new Map<string, number>();
     const clickCounts = new Map<string, number>();
+    const countryCounts = new Map<string, number>();
+    const sessionTimes = new Map<string, { min: number; max: number }>();
 
     for (const event of events) {
       if (event.eventType === 'PAGE_VIEW' && event.path) {
@@ -89,6 +93,23 @@ export class AdminService {
       }
       if (event.eventType === 'CLICK' && event.label) {
         clickCounts.set(event.label, (clickCounts.get(event.label) ?? 0) + 1);
+      }
+
+      const country = (event as { country?: string | null }).country;
+      if (country) {
+        countryCounts.set(country, (countryCounts.get(country) ?? 0) + 1);
+      }
+
+      const createdAt = (event as { createdAt?: Date | string }).createdAt;
+      if (createdAt && event.sessionId) {
+        const ts = new Date(createdAt).getTime();
+        const current = sessionTimes.get(event.sessionId);
+        if (!current) {
+          sessionTimes.set(event.sessionId, { min: ts, max: ts });
+        } else {
+          current.min = Math.min(current.min, ts);
+          current.max = Math.max(current.max, ts);
+        }
       }
     }
 
@@ -102,6 +123,16 @@ export class AdminService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
+    const topCountries = Array.from(countryCounts.entries())
+      .map(([country, count]) => ({ country, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const durations = Array.from(sessionTimes.values()).map((s) => Math.max(0, s.max - s.min));
+    const avgSessionDurationSec = durations.length
+      ? Math.round(durations.reduce((acc, ms) => acc + ms, 0) / durations.length / 1000)
+      : 0;
+
     return {
       from: fromDate.toISOString(),
       to: toDate.toISOString(),
@@ -112,9 +143,11 @@ export class AdminService {
         formSubmits,
         uniqueVisitors,
         uniqueSessions,
+        avgSessionDurationSec,
       },
       topPages,
       topClicks,
+      topCountries,
     };
   }
 

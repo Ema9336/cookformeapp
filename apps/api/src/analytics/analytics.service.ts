@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AnalyticsEventType, Prisma } from '@prisma/client';
 import { Request } from 'express';
+import geoip from 'geoip-lite';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnalyticsEventDto } from './dto/create-analytics-event.dto';
 
@@ -18,6 +19,21 @@ export class AnalyticsService {
 
     const ipAddress = forwardedIp || req.ip || null;
     const userAgent = req.headers['user-agent']?.slice(0, 500) || null;
+    const geo = ipAddress ? geoip.lookup(ipAddress) : null;
+
+    const metadata: Prisma.InputJsonValue | undefined = dto.metadata
+      ? ({
+          ...(dto.metadata as Record<string, unknown>),
+          geo: geo
+            ? {
+                country: geo.country,
+                region: geo.region,
+                city: geo.city,
+                timezone: geo.timezone,
+              }
+            : undefined,
+        } as Prisma.InputJsonObject)
+      : undefined;
 
     try {
       await this.prisma.analyticsEvent.create({
@@ -26,10 +42,13 @@ export class AnalyticsService {
           path: dto.path,
           element: dto.element,
           label: dto.label,
+          country: geo?.country,
+          region: geo?.region,
+          city: geo?.city,
           sessionId: dto.sessionId,
           visitorId: dto.visitorId,
           userId: dto.userId,
-          metadata: dto.metadata as Prisma.InputJsonValue | undefined,
+          metadata,
           referrer: dto.referrer,
           ipAddress,
           userAgent,
