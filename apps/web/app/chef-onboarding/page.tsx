@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getStateCompliance, US_STATES, type StateCompliance } from "@/lib/stateComplianceData";
+import { useAuth } from "../../hooks/useAuth";
+import { chefsApi } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -904,14 +907,61 @@ function Step5({ form }: { form: FormData }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ChefOnboardingPage() {
+  const { accessToken } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(defaultForm);
   const [published, setPublished] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
 
-  const handlePublish = () => setPublished(true);
+  const handlePublish = async () => {
+    if (!accessToken) {
+      router.push("/login");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // 1. Upsert the chef profile (also promotes user role to CHEF)
+      await chefsApi.updateMyProfile(accessToken, {
+        bio: form.bio,
+        city: form.city,
+        state: form.state,
+        category: form.serviceCategory || form.cuisineType,
+        tags: JSON.stringify(form.specialties),
+        licensed: form.licensedKitchen,
+        responseTime: "Usually responds in 2 hrs",
+      });
+
+      // 2. Create menu items (skip blank entries)
+      const allItems = [
+        ...form.meals.map((i) => ({ ...i, category: "meals" })),
+        ...form.weeklyPlans.map((i) => ({ ...i, category: "weekly" })),
+        ...form.cateringPlatters.map((i) => ({ ...i, category: "catering" })),
+      ].filter((i) => i.name.trim());
+
+      await Promise.all(
+        allItems.map((item) =>
+          chefsApi.addMenuItem(accessToken, {
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            category: item.category,
+          })
+        )
+      );
+
+      setPublished(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Submission failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (published) {
     return (
@@ -986,21 +1036,29 @@ export default function ChefOnboardingPage() {
 
       {/* Sticky bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
-        <div className="max-w-2xl mx-auto flex gap-3">
-          {step > 1 && (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="flex-1 rounded-2xl border border-gray-300 dark:border-gray-700 py-4 font-semibold"
-            >
-              ← Back
-            </button>
+        <div className="max-w-2xl mx-auto flex gap-3 flex-col">
+          {submitError && (
+            <p className="text-center text-sm text-red-500">{submitError}</p>
           )}
-          <button
-            onClick={() => step < totalSteps ? setStep(step + 1) : handlePublish()}
-            className="flex-1 rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg transition hover:bg-green-700"
-          >
-            {step === totalSteps ? "⭐ Publish Listing" : "Continue →"}
-          </button>
+          <div className="flex gap-3">
+            {step > 1 && (
+              <button
+                onClick={() => setStep(step - 1)}
+                className="flex-1 rounded-2xl border border-gray-300 dark:border-gray-700 py-4 font-semibold"
+              >
+                ← Back
+              </button>
+            )}
+            <button
+              onClick={() => step < totalSteps ? setStep(step + 1) : handlePublish()}
+              disabled={submitting}
+              className="flex-1 rounded-2xl bg-green-600 disabled:opacity-50 text-white py-4 font-semibold text-lg transition hover:bg-green-700"
+            >
+              {step === totalSteps
+                ? submitting ? "Submitting…" : "⭐ Publish Listing"
+                : "Continue →"}
+            </button>
+          </div>
         </div>
       </div>
     </main>

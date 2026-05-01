@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../../hooks/useAuth";
+import { adminApi } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -231,27 +233,102 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// ─── API status mapping ──────────────────────────────────────────────────────
+
+function apiStatusToLocal(s: string): ComplianceStatus {
+  const map: Record<string, ComplianceStatus> = {
+    PENDING: "pending",
+    APPROVED: "approved",
+    CHANGES_REQUESTED: "changes_requested",
+    REJECTED: "rejected",
+  };
+  return map[s] ?? "pending";
+}
+
+function localStatusToApi(s: ComplianceStatus): string {
+  const map: Record<ComplianceStatus, string> = {
+    pending: "PENDING",
+    approved: "APPROVED",
+    changes_requested: "CHANGES_REQUESTED",
+    rejected: "REJECTED",
+  };
+  return map[s];
+}
+
+function apiChefToApplication(c: Record<string, unknown>): ChefApplication {
+  const user = (c.user ?? {}) as Record<string, unknown>;
+  let tags: string[] = [];
+  try { tags = c.tags ? JSON.parse(c.tags as string) : []; } catch { tags = []; }
+  const licensed = Boolean(c.licensed);
+  const score = [
+    licensed,
+    Boolean(c.bio),
+    Boolean(c.city),
+    Boolean(c.state),
+  ].filter(Boolean).length * 25;
+  return {
+    id: c.id as string,
+    chefName: (user.name as string) ?? (c.slug as string),
+    city: (c.city as string) ?? "",
+    state: (c.state as string) ?? "",
+    serviceCategory: (c.category as string) ?? "",
+    cuisineType: tags[0] ?? "",
+    submittedAt: (c.createdAt as string) ?? new Date().toISOString(),
+    status: apiStatusToLocal((c.complianceStatus as string) ?? "PENDING"),
+    complianceScore: score,
+    licensedKitchen: licensed,
+    kitchenType: licensed ? "licensed" : "",
+    foodHandlerCert: false,
+    hasInsurance: false,
+    seafoodPermit: false,
+    rawBarPermit: false,
+    shellfishCert: false,
+    uploadFoodHandlerCert: "",
+    uploadInsurance: "",
+    uploadSeafoodPermit: "",
+    uploadRawBarPermit: "",
+    uploadShellfishCert: "",
+    uploadKitchenLicense: "",
+    adminNotes: (c.adminNotes as string) ?? "",
+    reviewedBy: "",
+    reviewedAt: "",
+  };
+}
+
 // ─── Detail Drawer ────────────────────────────────────────────────────────────
 
 function ApplicationDrawer({
   app,
   onClose,
   onStatusChange,
+  accessToken,
 }: {
   app: ChefApplication;
   onClose: () => void;
   onStatusChange: (id: string, status: ComplianceStatus, notes: string) => void;
+  accessToken: string | null;
 }) {
   const [notes, setNotes] = useState(app.adminNotes);
   const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
 
-  const handleAction = (status: ComplianceStatus) => {
+  const handleAction = async (status: ComplianceStatus) => {
     setSaving(true);
-    setTimeout(() => {
+    setActionError("");
+    try {
+      if (accessToken) {
+        await adminApi.updateCompliance(accessToken, app.id, {
+          status: localStatusToApi(status),
+          adminNotes: notes,
+        });
+      }
       onStatusChange(app.id, status, notes);
-      setSaving(false);
       onClose();
-    }, 600);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Action failed.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const uploads = [
@@ -361,12 +438,14 @@ function ApplicationDrawer({
             />
           </div>
 
-          {/* Previous review info */}
-          {app.reviewedBy && (
-            <p className="text-xs text-gray-400">
-              Last reviewed by <strong>{app.reviewedBy}</strong> on {formatDate(app.reviewedAt)}
-            </p>
-          )}
+            {app.reviewedBy && (
+              <p className="text-xs text-gray-400">
+                Last reviewed by <strong>{app.reviewedBy}</strong> on {formatDate(app.reviewedAt)}
+              </p>
+            )}
+            {actionError && (
+              <p className="text-xs text-red-500">{actionError}</p>
+            )}
         </div>
 
         {/* Action buttons */}
@@ -403,9 +482,31 @@ function ApplicationDrawer({
 type FilterTab = "all" | ComplianceStatus;
 
 export default function AdminCompliancePage() {
+  const { accessToken } = useAuth();
   const [applications, setApplications] = useState<ChefApplication[]>(mockApplications);
   const [selected, setSelected] = useState<ChefApplication | null>(null);
   const [filter, setFilter] = useState<FilterTab>("all");
+  const [loadError, setLoadError] = useState("");
+  const [showingDemoData, setShowingDemoData] = useState(true);
+
+  useEffect(() => {
+    if (!accessToken) return;
+
+    adminApi.listChefs(accessToken)
+      .then((data) => {
+        const real = (data as Record<string, unknown>[]).map(apiChefToApplication);
+        setApplications(real);
+        setShowingDemoData(false);
+        setLoadError(real.length === 0 ? "No chef applications yet." : "");
+      })
+      .catch(() => {
+        setApplications(mockApplications);
+        setShowingDemoData(true);
+        setLoadError("Could not load chefs from API — showing demo data.");
+      });
+  }, [accessToken]);
+
+  // Non-admins get a 403 from the API — no client-side redirect needed here
 
   const handleStatusChange = (id: string, status: ComplianceStatus, notes: string) => {
     setApplications((prev) =>
@@ -454,6 +555,18 @@ export default function AdminCompliancePage() {
               </span>
             )}
             <Link
+              href="/admin-users"
+              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+            >
+              User Roles
+            </Link>
+            <Link
+              href="/admin-audit"
+              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+            >
+              Audit Logs
+            </Link>
+            <Link
               href="/chef-onboarding"
               className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
             >
@@ -463,7 +576,17 @@ export default function AdminCompliancePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+        <div className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+        {loadError && (
+          <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 p-3 text-xs text-amber-700 dark:text-amber-300">
+            ⚠️ {loadError}
+          </div>
+        )}
+        {showingDemoData && (
+          <div className="rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 p-3 text-xs text-blue-700 dark:text-blue-300">
+            Demo mode is active. Admin API data is not being displayed.
+          </div>
+        )}
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -567,6 +690,7 @@ export default function AdminCompliancePage() {
             handleStatusChange(id, status, notes);
             setSelected(null);
           }}
+          accessToken={accessToken}
         />
       )}
     </main>

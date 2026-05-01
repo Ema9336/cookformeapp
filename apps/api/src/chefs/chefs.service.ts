@@ -53,9 +53,31 @@ export class ChefsService {
   }
 
   async updateProfile(userId: string, dto: UpdateChefProfileDto) {
-    const chef = await this.prisma.chef.findUnique({ where: { userId } });
-    if (!chef) throw new NotFoundException('Chef profile not found');
-    return this.prisma.chef.update({ where: { userId }, data: dto });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Derive a slug from the user's name if no profile exists yet
+    let slug = toSlug(user.name);
+    const slugConflict = await this.prisma.chef.findFirst({
+      where: { slug, NOT: { userId } },
+    });
+    if (slugConflict) slug = `${slug}-${Date.now()}`;
+
+    const chef = await this.prisma.chef.upsert({
+      where: { userId },
+      create: { userId, slug, ...dto },
+      update: dto,
+    });
+
+    // Promote user to CHEF role on first profile save
+    if (user.role !== 'CHEF') {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: 'CHEF' },
+      });
+    }
+
+    return chef;
   }
 
   async addMenuItem(userId: string, dto: CreateMenuItemDto) {

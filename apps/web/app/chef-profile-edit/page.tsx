@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../hooks/useAuth";
+import { chefsApi, usersApi } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,24 +142,76 @@ function Toggle({ checked, onChange, label, description }: {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ChefProfileEditPage() {
+  const { accessToken } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileData>(defaultProfile);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const serverProfile = useRef<ProfileData>(defaultProfile);
+
+  // Load real profile on mount
+  useEffect(() => {
+    if (!accessToken) { router.push("/login"); return; }
+    chefsApi.getMyProfile(accessToken)
+      .then((data) => {
+        const d = data as Record<string, unknown>;
+        const user = d.user as Record<string, unknown> | undefined;
+        let tags: string[] = [];
+        try { tags = d.tags ? JSON.parse(d.tags as string) : []; } catch { tags = []; }
+        const category = (d.category as string) ?? "";
+        const isServiceCategory = ["Meals", "Weekly Meal Prep", "Catering Platters"].includes(category);
+        const patch: Partial<ProfileData> = {
+          chefName: (user?.name as string) ?? defaultProfile.chefName,
+          bio: (d.bio as string) ?? "",
+          city: (d.city as string) ?? "",
+          state: (d.state as string) ?? "",
+          serviceCategory: isServiceCategory ? (category as ProfileData["serviceCategory"]) : "",
+          cuisineType: !isServiceCategory && category ? category : defaultProfile.cuisineType,
+          specialties: tags,
+        };
+        const merged = { ...defaultProfile, ...patch };
+        setProfile(merged);
+        serverProfile.current = merged;
+        setHasChanges(false);
+      })
+      .catch(() => setLoadError("Could not load your profile — showing defaults."));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const update = (patch: Partial<ProfileData>) => {
     setProfile((p) => ({ ...p, ...patch }));
     setHasChanges(true);
     setSaved(false);
+    setSaveError("");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!accessToken) { router.push("/login"); return; }
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    setSaveError("");
+    try {
+      await chefsApi.updateMyProfile(accessToken, {
+        bio: profile.bio,
+        city: profile.city,
+        state: profile.state,
+        category: profile.serviceCategory || profile.cuisineType,
+        tags: JSON.stringify(profile.specialties),
+      });
+      // Update display name if changed
+      if (profile.chefName !== serverProfile.current.chefName) {
+        await usersApi.update(accessToken, { name: profile.chefName });
+      }
+      serverProfile.current = profile;
       setSaved(true);
       setHasChanges(false);
-    }, 800);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Save failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleSpecialty = (s: string) => {
@@ -205,6 +260,16 @@ export default function ChefProfileEditPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
+        {loadError && (
+          <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 p-3 text-xs text-amber-700 dark:text-amber-300">
+            ⚠️ {loadError}
+          </div>
+        )}
+        {saveError && (
+          <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 p-3 text-xs text-red-700 dark:text-red-400">
+            ✕ {saveError}
+          </div>
+        )}
         {/* Listing status */}
         <Section title="Listing Status" description="Control whether your profile is visible to customers.">
           <Toggle
@@ -499,8 +564,9 @@ export default function ChefProfileEditPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  setProfile(defaultProfile);
+                  setProfile(serverProfile.current);
                   setHasChanges(false);
+                  setSaveError("");
                 }}
                 className="text-sm text-gray-500 hover:text-black dark:hover:text-white transition"
               >

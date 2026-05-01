@@ -99,3 +99,31 @@ export const bookingsApi = {
   updateStatus: (token: string, id: string, status: string) =>
     request(`/bookings/${id}/status`, { method: 'PATCH', body: { status }, token }),
 };
+
+// ─── Admin ─────────────────────────────────────────────────────────────────
+
+export const adminApi = {
+  listChefs: (token: string) =>
+    request<unknown[]>('/admin/chefs', { token }),
+
+  listAuditLogs: (token: string, limit = 100) =>
+    request<unknown[]>(`/admin/audit-logs?limit=${limit}`, { token }),
+
+  listUsers: (token: string) =>
+    request<unknown[]>('/admin/users', { token }),
+
+  updateUserRole: (token: string, id: string, role: 'CUSTOMER' | 'CHEF' | 'ADMIN') =>
+    request(`/admin/users/${id}/role`, { method: 'PATCH', body: { role }, token }),
+
+  updateUserRolesBulk: (
+    token: string,
+    ids: string[],
+    role: 'CUSTOMER' | 'CHEF' | 'ADMIN',
+  ) => request('/admin/users/roles/bulk', { method: 'PATCH', body: { ids, role }, token }),
+
+  updateCompliance: (
+    token: string,
+    id: string,
+    data: { status: string; adminNotes?: string },
+  ) => request(`/admin/chefs/${id}/compliance`, { method: 'PATCH', body: data, token }),
+};

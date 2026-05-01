@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ChefMap from "../components/ChefMap";
 import { useUserLocation } from "../hooks/useUserLocation";
-import { useChefLocations } from "../hooks/useChefLocations";
+import { useAllChefs } from "../hooks/useAllChefs";
 import { calcDistanceMiles } from "../utils/calcDistance";
 import { useAuth } from "../hooks/useAuth";
 
@@ -30,7 +30,7 @@ type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
 export default function HomePage() {
   const { location: userLocation, loading, error, retry } = useUserLocation();
-  const dynamicChefs = useChefLocations(userLocation);
+  const dynamicChefs = useAllChefs(userLocation);
   const { user, logout } = useAuth();
 
   // Filter state
@@ -133,6 +133,11 @@ export default function HomePage() {
               {user.role === "CHEF" && (
                 <Link href="/chef-dashboard" className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700">
                   Dashboard
+                </Link>
+              )}
+              {user.role === "ADMIN" && (
+                <Link href="/admin-compliance" className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700">
+                  Admin
                 </Link>
               )}
               <button
