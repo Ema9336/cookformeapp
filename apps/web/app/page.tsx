@@ -130,6 +130,9 @@ export default function HomePage() {
               <span className="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
                 Hi, {user.name.split(" ")[0]}
               </span>
+                <Link href="/bookings" className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700">
+                  My Bookings
+                </Link>
               {user.role === "CHEF" && (
                 <Link href="/chef-dashboard" className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700">
                   Dashboard
