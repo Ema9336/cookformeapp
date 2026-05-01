@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { bookingsApi } from '@/lib/api';
-import { getAccessToken } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Booking {
   id: string;
@@ -13,6 +13,7 @@ interface Booking {
   guestCount: number;
   address: string;
   notes?: string;
+  allergies?: string;
   totalAmount: number;
   chef: {
     user: {
@@ -37,21 +38,23 @@ const statusLabels: Record<string, string> = {
 
 export default function BookingsPage() {
   const router = useRouter();
+  const { accessToken, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filteredStatus, setFilteredStatus] = useState<string>('ALL');
 
   useEffect(() => {
+    if (authLoading) return;
+
     const loadBookings = async () => {
       try {
-        const token = getAccessToken();
-        if (!token) {
+        if (!accessToken) {
           router.push('/');
           return;
         }
 
-        const data = await bookingsApi.myBookings(token);
+        const data = await bookingsApi.myBookings(accessToken);
         setBookings(data as Booking[]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load bookings');
@@ -61,7 +64,7 @@ export default function BookingsPage() {
     };
 
     loadBookings();
-  }, [router]);
+  }, [accessToken, authLoading, router]);
 
   const filtered = filteredStatus === 'ALL' 
     ? bookings 
