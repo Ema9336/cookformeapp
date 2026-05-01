@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
-import { getAnalyticsIdentity, trackAnalyticsEvent } from "../lib/analytics";
+import { trackAnalyticsEvent } from "../lib/analytics";
 
 function textOrEmpty(value?: string | null, max = 300) {
   return (value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -19,18 +19,9 @@ function elementDescriptor(el: HTMLElement) {
 export default function AnalyticsTracker() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const visitorIdRef = useRef<string>("");
-  const sessionIdRef = useRef<string>("");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const ids = getAnalyticsIdentity();
-    visitorIdRef.current = ids.visitorId;
-    sessionIdRef.current = ids.sessionId;
-  }, []);
-
-  useEffect(() => {
-    if (!pathname || !sessionIdRef.current) return;
+    if (!pathname) return;
 
     trackAnalyticsEvent({
       eventType: "PAGE_VIEW",
@@ -46,7 +37,7 @@ export default function AnalyticsTracker() {
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       const clickable = target?.closest("a,button,[data-analytics],input[type='submit']") as HTMLElement | null;
-      if (!clickable || !sessionIdRef.current) return;
+      if (!clickable) return;
 
       const label = textOrEmpty(
         clickable.getAttribute("data-analytics-label") ||

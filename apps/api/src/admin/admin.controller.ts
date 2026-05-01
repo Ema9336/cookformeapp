@@ -39,6 +39,8 @@ export class AdminController {
     @Query('eventType') eventType?: string,
     @Query('path') path?: string,
     @Query('query') query?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
     const parsed = Number(limit);
     const safeLimit = Number.isFinite(parsed) ? parsed : 200;
@@ -47,6 +49,8 @@ export class AdminController {
       eventType,
       path,
       query,
+      from,
+      to,
     });
   }
 

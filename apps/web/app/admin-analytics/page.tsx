@@ -15,11 +15,18 @@ type AnalyticsSummary = {
     formSubmits: number;
     uniqueVisitors: number;
     uniqueSessions: number;
-      avgSessionDurationSec: number;
+    avgSessionDurationSec: number;
   };
   topPages: { path: string; count: number }[];
   topClicks: { label: string; count: number }[];
   topCountries: { country: string; count: number }[];
+  funnel: {
+    key: string;
+    label: string;
+    count: number;
+    conversionFromPrevPct: number;
+    dropOffFromPrevPct: number;
+  }[];
 };
 
 type AnalyticsEvent = {
@@ -30,8 +37,12 @@ type AnalyticsEvent = {
   label: string | null;
   sessionId: string;
   visitorId: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
   userId: string | null;
   referrer: string | null;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   user?: { id: string; email: string; name: string; role: string } | null;
 };
@@ -57,6 +68,12 @@ function formatDuration(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}m ${secs}s`;
+}
+
+function escapeCsv(value: unknown) {
+  const raw = String(value ?? "");
+  const escaped = raw.replace(/"/g, '""');
+  return `"${escaped}"`;
 }
 
 export default function AdminAnalyticsPage() {
@@ -88,6 +105,8 @@ export default function AdminAnalyticsPage() {
           eventType: eventTypeFilter === "ALL" ? undefined : eventTypeFilter,
           path: pathFilter || undefined,
           query: query || undefined,
+          from: fromIso,
+          to: toIso,
         }),
       ]);
 
@@ -142,6 +161,54 @@ export default function AdminAnalyticsPage() {
     setEventTypeFilter("ALL");
     setDateFrom("");
     setDateTo("");
+  };
+
+  const exportCsv = () => {
+    const headers = [
+      "timestamp",
+      "eventType",
+      "path",
+      "label",
+      "element",
+      "country",
+      "region",
+      "city",
+      "visitorId",
+      "sessionId",
+      "userName",
+      "userEmail",
+      "referrer",
+    ];
+
+    const rows = events.map((event) => [
+      event.createdAt,
+      event.eventType,
+      event.path ?? "",
+      event.label ?? "",
+      event.element ?? "",
+      event.country ?? "",
+      event.region ?? "",
+      event.city ?? "",
+      event.visitorId ?? "",
+      event.sessionId,
+      event.user?.name ?? "",
+      event.user?.email ?? "",
+      event.referrer ?? "",
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const fromPart = dateFrom || "all";
+    const toPart = dateTo || "all";
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cookforme-analytics-${fromPart}-to-${toPart}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -251,6 +318,12 @@ export default function AdminAnalyticsPage() {
               >
                 Apply
               </button>
+              <button
+                onClick={exportCsv}
+                className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700"
+              >
+                Export CSV
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -299,6 +372,32 @@ export default function AdminAnalyticsPage() {
             <p className="text-2xl font-bold">{formatDuration(summary?.totals.avgSessionDurationSec ?? 0)}</p>
             <p className="text-xs text-gray-500">Avg Session Duration</p>
           </div>
+        </div>
+
+        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <h2 className="font-semibold mb-3">Funnel Drop-off</h2>
+          {(summary?.funnel?.length ?? 0) === 0 ? (
+            <p className="text-sm text-gray-500">No funnel data yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {summary?.funnel.map((step) => (
+                <div key={step.key} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{step.label}</span>
+                    <span>
+                      {step.count} sessions · {step.conversionFromPrevPct}% kept · {step.dropOffFromPrevPct}% drop
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+                    <div
+                      className="h-full bg-black dark:bg-white"
+                      style={{ width: `${Math.max(2, step.conversionFromPrevPct)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -356,9 +455,10 @@ export default function AdminAnalyticsPage() {
             <div className="col-span-2">When</div>
             <div className="col-span-1">Type</div>
             <div className="col-span-3">Path / Label</div>
-            <div className="col-span-2">Element</div>
+            <div className="col-span-2">Location</div>
             <div className="col-span-2">Visitor / Session</div>
-            <div className="col-span-2">User</div>
+            <div className="col-span-1">User</div>
+            <div className="col-span-1">Element / Referrer</div>
           </div>
 
           {loading ? (
@@ -378,14 +478,21 @@ export default function AdminAnalyticsPage() {
                   <p className="font-medium truncate">{event.path ?? "—"}</p>
                   <p className="text-gray-500 truncate">{event.label ?? "—"}</p>
                 </div>
-                <div className="col-span-2 text-xs text-gray-500 truncate">{event.element ?? "—"}</div>
+                <div className="col-span-2 text-xs">
+                  <p className="truncate">{event.country ?? "—"}</p>
+                  <p className="text-gray-500 truncate">{[event.region, event.city].filter(Boolean).join(", ") || "—"}</p>
+                </div>
                 <div className="col-span-2 text-xs">
                   <p className="truncate">v: {event.visitorId ?? "—"}</p>
                   <p className="text-gray-500 truncate">s: {event.sessionId}</p>
                 </div>
-                <div className="col-span-2 text-xs">
+                <div className="col-span-1 text-xs">
                   <p className="font-medium truncate">{event.user?.name ?? "Anonymous"}</p>
                   <p className="text-gray-500 truncate">{event.user?.email ?? "—"}</p>
+                </div>
+                <div className="col-span-1 text-xs text-gray-500">
+                  <p className="truncate">{event.element ?? "—"}</p>
+                  <p className="truncate">{event.referrer ?? "—"}</p>
                 </div>
               </div>
             ))

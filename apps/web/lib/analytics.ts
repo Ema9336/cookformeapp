@@ -2,6 +2,9 @@ import { analyticsApi } from './api';
 
 const VISITOR_KEY = 'cf_visitor_id';
 const SESSION_KEY = 'cf_session_id';
+const CONSENT_KEY = 'cf_analytics_consent';
+
+export type AnalyticsConsent = 'granted' | 'denied' | 'unknown';
 
 function randomId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -29,6 +32,22 @@ export function getAnalyticsIdentity() {
   return { visitorId, sessionId };
 }
 
+export function getAnalyticsConsent(): AnalyticsConsent {
+  if (typeof window === 'undefined') return 'unknown';
+  const value = window.localStorage.getItem(CONSENT_KEY);
+  if (value === 'granted' || value === 'denied') return value;
+  return 'unknown';
+}
+
+export function setAnalyticsConsent(consent: Exclude<AnalyticsConsent, 'unknown'>) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(CONSENT_KEY, consent);
+}
+
+export function canTrackAnalytics() {
+  return getAnalyticsConsent() === 'granted';
+}
+
 export function trackAnalyticsEvent(params: {
   eventType: 'PAGE_VIEW' | 'CLICK' | 'FORM_SUBMIT' | 'CUSTOM';
   path?: string;
@@ -37,6 +56,8 @@ export function trackAnalyticsEvent(params: {
   userId?: string;
   metadata?: Record<string, unknown>;
 }) {
+  if (!canTrackAnalytics()) return;
+
   const { visitorId, sessionId } = getAnalyticsIdentity();
   if (!sessionId) return;
 

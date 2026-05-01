@@ -137,13 +137,22 @@ export const adminApi = {
 
   listAnalyticsEvents: (
     token: string,
-    params?: { limit?: number; eventType?: string; path?: string; query?: string },
+    params?: {
+      limit?: number;
+      eventType?: string;
+      path?: string;
+      query?: string;
+      from?: string;
+      to?: string;
+    },
   ) => {
     const qs = new URLSearchParams();
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.eventType) qs.set('eventType', params.eventType);
     if (params?.path) qs.set('path', params.path);
     if (params?.query) qs.set('query', params.query);
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
 
     return request<unknown[]>(`/admin/analytics/events${qs.toString() ? `?${qs.toString()}` : ''}`, {
       token,

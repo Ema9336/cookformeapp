@@ -128,6 +128,70 @@ export class AdminService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
+    const sessionsByStep = {
+      landing: new Set<string>(),
+      checkout: new Set<string>(),
+      bookingSubmit: new Set<string>(),
+      bookingConfirmed: new Set<string>(),
+      register: new Set<string>(),
+    };
+
+    for (const event of events) {
+      if (!event.sessionId) continue;
+
+      if (event.eventType === 'PAGE_VIEW' && event.path === '/') {
+        sessionsByStep.landing.add(event.sessionId);
+      }
+
+      if (
+        (event.eventType === 'CUSTOM' && event.label === 'checkout_view') ||
+        (event.eventType === 'PAGE_VIEW' && event.path?.startsWith('/checkout'))
+      ) {
+        sessionsByStep.checkout.add(event.sessionId);
+      }
+
+      if (event.eventType === 'FORM_SUBMIT' && event.label === 'booking_submit_success') {
+        sessionsByStep.bookingSubmit.add(event.sessionId);
+      }
+
+      if (
+        (event.eventType === 'CUSTOM' && event.label === 'booking_confirmed_view') ||
+        (event.eventType === 'PAGE_VIEW' && event.path?.startsWith('/booking-confirmed'))
+      ) {
+        sessionsByStep.bookingConfirmed.add(event.sessionId);
+      }
+
+      if (event.eventType === 'CUSTOM' && event.label === 'register_success') {
+        sessionsByStep.register.add(event.sessionId);
+      }
+    }
+
+    const funnelRaw = [
+      { key: 'landing', label: 'Landing Page', count: sessionsByStep.landing.size },
+      { key: 'checkout', label: 'Checkout View', count: sessionsByStep.checkout.size },
+      { key: 'booking_submit', label: 'Booking Submit', count: sessionsByStep.bookingSubmit.size },
+      { key: 'booking_confirmed', label: 'Booking Confirmed', count: sessionsByStep.bookingConfirmed.size },
+      { key: 'register', label: 'Signup Success', count: sessionsByStep.register.size },
+    ];
+
+    const funnel = funnelRaw.map((step, idx) => {
+      if (idx === 0) {
+        return {
+          ...step,
+          conversionFromPrevPct: 100,
+          dropOffFromPrevPct: 0,
+        };
+      }
+
+      const prev = funnelRaw[idx - 1].count;
+      const conversionFromPrevPct = prev > 0 ? Math.round((step.count / prev) * 100) : 0;
+      return {
+        ...step,
+        conversionFromPrevPct,
+        dropOffFromPrevPct: 100 - conversionFromPrevPct,
+      };
+    });
+
     const durations = Array.from(sessionTimes.values()).map((s) => Math.max(0, s.max - s.min));
     const avgSessionDurationSec = durations.length
       ? Math.round(durations.reduce((acc, ms) => acc + ms, 0) / durations.length / 1000)
@@ -148,6 +212,7 @@ export class AdminService {
       topPages,
       topClicks,
       topCountries,
+      funnel,
     };
   }
 
@@ -156,6 +221,8 @@ export class AdminService {
     eventType?: string;
     path?: string;
     query?: string;
+    from?: string;
+    to?: string;
   }) {
     const cappedLimit = Math.max(1, Math.min(500, params.limit));
 
@@ -164,10 +231,22 @@ export class AdminService {
       ? (params.eventType as AnalyticsEventType)
       : undefined;
 
+    const dateRange = (params.from || params.to)
+      ? this.parseDateRange(params.from, params.to)
+      : null;
+
     const events = await this.prisma.analyticsEvent.findMany({
       where: {
         ...(safeEventType ? { eventType: safeEventType } : {}),
         ...(params.path ? { path: { contains: params.path, mode: 'insensitive' } } : {}),
+        ...(dateRange
+          ? {
+              createdAt: {
+                gte: dateRange.fromDate,
+                lte: dateRange.toDate,
+              },
+            }
+          : {}),
       },
       take: cappedLimit,
       orderBy: { createdAt: 'desc' },
@@ -188,6 +267,9 @@ export class AdminService {
         event.label,
         event.element,
         event.referrer,
+        event.country,
+        event.region,
+        event.city,
         event.sessionId,
         event.visitorId,
         event.user?.email,
