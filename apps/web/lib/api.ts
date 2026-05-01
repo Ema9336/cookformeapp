@@ -88,7 +88,7 @@ export const chefsApi = {
 
 export const bookingsApi = {
   create: (token: string, data: Record<string, unknown>) =>
-    request('/bookings', { method: 'POST', body: data, token }),
+    request<{ id: string }>('/bookings', { method: 'POST', body: data, token }),
 
   myBookings: (token: string) =>
     request<unknown[]>('/bookings/my', { token }),
