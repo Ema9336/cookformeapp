@@ -567,6 +567,12 @@ export default function AdminCompliancePage() {
               Audit Logs
             </Link>
             <Link
+              href="/admin-analytics"
+              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+            >
+              Analytics
+            </Link>
+            <Link
               href="/chef-onboarding"
               className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
             >

@@ -24,6 +24,7 @@ model User {
   bookings  Booking[]
   refreshTokens RefreshToken[]
   adminAuditLogs AdminAuditLog[]
+  analyticsEvents AnalyticsEvent[]
 }
 
 model RefreshToken {
@@ -104,6 +105,28 @@ model AdminAuditLog {
   createdAt  DateTime @default(now())
 }
 
+model AnalyticsEvent {
+  id        String             @id @default(cuid())
+  eventType AnalyticsEventType
+  path      String?
+  element   String?
+  label     String?
+  sessionId String
+  visitorId String?
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  metadata  Json?
+  referrer  String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime           @default(now())
+
+  @@index([createdAt])
+  @@index([eventType, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
 enum ComplianceStatus {
   PENDING
   APPROVED
@@ -122,4 +145,11 @@ enum BookingStatus {
   ACCEPTED
   COMPLETED
   DECLINED
+}
+
+enum AnalyticsEventType {
+  PAGE_VIEW
+  CLICK
+  FORM_SUBMIT
+  CUSTOM
 }

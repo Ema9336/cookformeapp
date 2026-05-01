@@ -6,6 +6,18 @@ type RequestOptions = {
   token?: string;
 };
 
+export type AnalyticsEventPayload = {
+  eventType: 'PAGE_VIEW' | 'CLICK' | 'FORM_SUBMIT' | 'CUSTOM';
+  path?: string;
+  element?: string;
+  label?: string;
+  sessionId: string;
+  visitorId?: string;
+  userId?: string;
+  metadata?: Record<string, unknown>;
+  referrer?: string;
+};
+
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -100,6 +112,13 @@ export const bookingsApi = {
     request(`/bookings/${id}/status`, { method: 'PATCH', body: { status }, token }),
 };
 
+// ─── Analytics ─────────────────────────────────────────────────────────────
+
+export const analyticsApi = {
+  trackEvent: (data: AnalyticsEventPayload) =>
+    request<{ ok: boolean }>('/analytics/events', { method: 'POST', body: data }),
+};
+
 // ─── Admin ─────────────────────────────────────────────────────────────────
 
 export const adminApi = {
@@ -108,6 +127,28 @@ export const adminApi = {
 
   listAuditLogs: (token: string, limit = 100) =>
     request<unknown[]>(`/admin/audit-logs?limit=${limit}`, { token }),
+
+  getAnalyticsSummary: (token: string, from?: string, to?: string) => {
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    return request<unknown>(`/admin/analytics/summary${qs.toString() ? `?${qs.toString()}` : ''}`, { token });
+  },
+
+  listAnalyticsEvents: (
+    token: string,
+    params?: { limit?: number; eventType?: string; path?: string; query?: string },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.eventType) qs.set('eventType', params.eventType);
+    if (params?.path) qs.set('path', params.path);
+    if (params?.query) qs.set('query', params.query);
+
+    return request<unknown[]>(`/admin/analytics/events${qs.toString() ? `?${qs.toString()}` : ''}`, {
+      token,
+    });
+  },
 
   listUsers: (token: string) =>
     request<unknown[]>('/admin/users', { token }),

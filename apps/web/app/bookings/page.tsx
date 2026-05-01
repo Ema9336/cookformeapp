@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { bookingsApi, usersApi } from '@/lib/api';
+import { bookingsApi } from '@/lib/api';
 import { getAccessToken } from '@/lib/auth';
-import styles from '@/app/globals.css';
 
 interface Booking {
   id: string;

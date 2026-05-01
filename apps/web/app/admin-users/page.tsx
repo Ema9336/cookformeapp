@@ -201,6 +201,10 @@ export default function AdminUsersPage() {
               Audit Logs
             </Link>
             <span className="text-gray-300 dark:text-gray-700">|</span>
+            <Link href="/admin-analytics" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+              Analytics
+            </Link>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
             <h1 className="font-bold text-xl">User Roles</h1>
           </div>
           <span className="text-xs font-semibold bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded-full">

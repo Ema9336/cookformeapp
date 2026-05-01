@@ -25,6 +25,31 @@ export class AdminController {
     return this.adminService.listAuditLogs(safeLimit);
   }
 
+  @Get('analytics/summary')
+  getAnalyticsSummary(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.adminService.getAnalyticsSummary(from, to);
+  }
+
+  @Get('analytics/events')
+  listAnalyticsEvents(
+    @Query('limit') limit?: string,
+    @Query('eventType') eventType?: string,
+    @Query('path') path?: string,
+    @Query('query') query?: string,
+  ) {
+    const parsed = Number(limit);
+    const safeLimit = Number.isFinite(parsed) ? parsed : 200;
+    return this.adminService.listAnalyticsEvents({
+      limit: safeLimit,
+      eventType,
+      path,
+      query,
+    });
+  }
+
   @Patch('users/:id/role')
   updateUserRole(
     @Req() req: any,

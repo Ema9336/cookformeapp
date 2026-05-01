@@ -4,9 +4,26 @@ import { UpdateComplianceDto } from './dto/update-compliance.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateUserRolesBulkDto } from './dto/update-user-roles-bulk.dto';
 
+type AnalyticsEventType = 'PAGE_VIEW' | 'CLICK' | 'FORM_SUBMIT' | 'CUSTOM';
+
 @Injectable()
 export class AdminService {
   constructor(private prisma: PrismaService) {}
+
+  private parseDateRange(from?: string, to?: string) {
+    const toDate = to ? new Date(to) : new Date();
+    const fromDate = from ? new Date(from) : new Date(toDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+      throw new BadRequestException('Invalid date range');
+    }
+
+    if (fromDate > toDate) {
+      throw new BadRequestException('`from` must be before `to`');
+    }
+
+    return { fromDate, toDate };
+  }
 
   private async logAction(params: {
     actorId: string;
@@ -34,6 +51,116 @@ export class AdminService {
       include: {
         actor: { select: { id: true, email: true, name: true, role: true } },
       },
+    });
+  }
+
+  async getAnalyticsSummary(from?: string, to?: string) {
+    const { fromDate, toDate } = this.parseDateRange(from, to);
+
+    const events = await this.prisma.analyticsEvent.findMany({
+      where: {
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+      },
+      select: {
+        eventType: true,
+        path: true,
+        label: true,
+        visitorId: true,
+        sessionId: true,
+      },
+    });
+
+    const pageViews = events.filter((e) => e.eventType === 'PAGE_VIEW').length;
+    const clicks = events.filter((e) => e.eventType === 'CLICK').length;
+    const formSubmits = events.filter((e) => e.eventType === 'FORM_SUBMIT').length;
+
+    const uniqueVisitors = new Set(events.map((e) => e.visitorId).filter(Boolean)).size;
+    const uniqueSessions = new Set(events.map((e) => e.sessionId).filter(Boolean)).size;
+
+    const pageCounts = new Map<string, number>();
+    const clickCounts = new Map<string, number>();
+
+    for (const event of events) {
+      if (event.eventType === 'PAGE_VIEW' && event.path) {
+        pageCounts.set(event.path, (pageCounts.get(event.path) ?? 0) + 1);
+      }
+      if (event.eventType === 'CLICK' && event.label) {
+        clickCounts.set(event.label, (clickCounts.get(event.label) ?? 0) + 1);
+      }
+    }
+
+    const topPages = Array.from(pageCounts.entries())
+      .map(([path, count]) => ({ path, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const topClicks = Array.from(clickCounts.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    return {
+      from: fromDate.toISOString(),
+      to: toDate.toISOString(),
+      totals: {
+        events: events.length,
+        pageViews,
+        clicks,
+        formSubmits,
+        uniqueVisitors,
+        uniqueSessions,
+      },
+      topPages,
+      topClicks,
+    };
+  }
+
+  async listAnalyticsEvents(params: {
+    limit: number;
+    eventType?: string;
+    path?: string;
+    query?: string;
+  }) {
+    const cappedLimit = Math.max(1, Math.min(500, params.limit));
+
+    const allowedTypes: AnalyticsEventType[] = ['PAGE_VIEW', 'CLICK', 'FORM_SUBMIT', 'CUSTOM'];
+    const safeEventType = allowedTypes.includes(params.eventType as AnalyticsEventType)
+      ? (params.eventType as AnalyticsEventType)
+      : undefined;
+
+    const events = await this.prisma.analyticsEvent.findMany({
+      where: {
+        ...(safeEventType ? { eventType: safeEventType } : {}),
+        ...(params.path ? { path: { contains: params.path, mode: 'insensitive' } } : {}),
+      },
+      take: cappedLimit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true, role: true },
+        },
+      },
+    });
+
+    const q = params.query?.trim().toLowerCase();
+    if (!q) return events;
+
+    return events.filter((event) => {
+      const values = [
+        event.eventType,
+        event.path,
+        event.label,
+        event.element,
+        event.referrer,
+        event.sessionId,
+        event.visitorId,
+        event.user?.email,
+        event.user?.name,
+      ];
+      return values.some((value) => value?.toLowerCase().includes(q));
     });
   }
 
