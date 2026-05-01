@@ -15,10 +15,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard, JwtRefreshGuard } from './guards/auth.guard';
 
 const COOKIE_NAME = 'cfm_refresh';
+const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  secure: IS_PROD,
+  // 'none' required for cross-origin requests (Vercel frontend → Railway API).
+  // Falls back to 'lax' in local dev where same-origin applies.
+  sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
   path: '/api/auth',
 };
