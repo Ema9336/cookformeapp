@@ -20,12 +20,48 @@ type AnalyticsSummary = {
   topPages: { path: string; count: number }[];
   topClicks: { label: string; count: number }[];
   topCountries: { country: string; count: number }[];
+  topRegions: { region: string; count: number }[];
+  topCities: { city: string; count: number }[];
   funnel: {
     key: string;
     label: string;
     count: number;
     conversionFromPrevPct: number;
     dropOffFromPrevPct: number;
+  }[];
+  sourceFunnel: {
+    source: string;
+    landing: number;
+    checkout: number;
+    bookingSubmit: number;
+    bookingConfirmed: number;
+    register: number;
+    checkoutRate: number;
+    bookingRate: number;
+    confirmRate: number;
+    signupRate: number;
+  }[];
+};
+
+type AnalyticsJourney = {
+  key: string;
+  source: string;
+  visitorId: string | null;
+  sessionId: string;
+  firstSeen: string;
+  lastSeen: string;
+  durationSec: number;
+  eventCount: number;
+  user?: { id: string; email: string; name: string; role: string } | null;
+  events: {
+    id: string;
+    createdAt: string;
+    eventType: string;
+    path: string | null;
+    label: string | null;
+    country: string | null;
+    region: string | null;
+    city: string | null;
   }[];
 };
 
@@ -80,6 +116,7 @@ export default function AdminAnalyticsPage() {
   const { accessToken } = useAuth();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
+  const [journeys, setJourneys] = useState<AnalyticsJourney[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [query, setQuery] = useState("");
@@ -98,7 +135,7 @@ export default function AdminAnalyticsPage() {
       const fromIso = dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : undefined;
       const toIso = dateTo ? new Date(`${dateTo}T23:59:59`).toISOString() : undefined;
 
-      const [summaryData, eventData] = await Promise.all([
+      const [summaryData, eventData, journeyData] = await Promise.all([
         adminApi.getAnalyticsSummary(accessToken, fromIso, toIso),
         adminApi.listAnalyticsEvents(accessToken, {
           limit: 300,
@@ -108,10 +145,17 @@ export default function AdminAnalyticsPage() {
           from: fromIso,
           to: toIso,
         }),
+        adminApi.listAnalyticsJourneys(accessToken, {
+          limit: 30,
+          from: fromIso,
+          to: toIso,
+          query: query || undefined,
+        }),
       ]);
 
       setSummary(summaryData as AnalyticsSummary);
       setEvents(eventData as AnalyticsEvent[]);
+      setJourneys(journeyData as AnalyticsJourney[]);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Failed to load analytics");
     } finally {
@@ -400,6 +444,42 @@ export default function AdminAnalyticsPage() {
           )}
         </div>
 
+        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4 overflow-x-auto">
+          <h2 className="font-semibold mb-3">Funnel By Traffic Source</h2>
+          {(summary?.sourceFunnel?.length ?? 0) === 0 ? (
+            <p className="text-sm text-gray-500">No source funnel data yet.</p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-gray-500 border-b border-gray-200 dark:border-gray-800">
+                  <th className="text-left py-2 pr-2">Source</th>
+                  <th className="text-right py-2 px-2">Landing</th>
+                  <th className="text-right py-2 px-2">Checkout</th>
+                  <th className="text-right py-2 px-2">Booking</th>
+                  <th className="text-right py-2 px-2">Confirmed</th>
+                  <th className="text-right py-2 px-2">Signup</th>
+                  <th className="text-right py-2 px-2">Checkout %</th>
+                  <th className="text-right py-2 pl-2">Signup %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary?.sourceFunnel.map((row) => (
+                  <tr key={row.source} className="border-b border-gray-100 dark:border-gray-900">
+                    <td className="py-2 pr-2 font-semibold">{row.source}</td>
+                    <td className="py-2 px-2 text-right">{row.landing}</td>
+                    <td className="py-2 px-2 text-right">{row.checkout}</td>
+                    <td className="py-2 px-2 text-right">{row.bookingSubmit}</td>
+                    <td className="py-2 px-2 text-right">{row.bookingConfirmed}</td>
+                    <td className="py-2 px-2 text-right">{row.register}</td>
+                    <td className="py-2 px-2 text-right">{row.checkoutRate}%</td>
+                    <td className="py-2 pl-2 text-right">{row.signupRate}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
             <h2 className="font-semibold mb-3">Top Pages</h2>
@@ -434,16 +514,77 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <h2 className="font-semibold mb-3">Top Countries</h2>
+            {(summary?.topCountries?.length ?? 0) === 0 ? (
+              <p className="text-sm text-gray-500">No geo data yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {summary?.topCountries.map((item) => (
+                  <div key={item.country} className="flex items-center justify-between text-sm">
+                    <span className="truncate mr-3">{item.country}</span>
+                    <span className="font-semibold">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <h2 className="font-semibold mb-3">Top Regions</h2>
+            {(summary?.topRegions?.length ?? 0) === 0 ? (
+              <p className="text-sm text-gray-500">No region data yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {summary?.topRegions.map((item) => (
+                  <div key={item.region} className="flex items-center justify-between text-sm">
+                    <span className="truncate mr-3">{item.region}</span>
+                    <span className="font-semibold">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <h2 className="font-semibold mb-3">Top Cities</h2>
+            {(summary?.topCities?.length ?? 0) === 0 ? (
+              <p className="text-sm text-gray-500">No city data yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {summary?.topCities.map((item) => (
+                  <div key={item.city} className="flex items-center justify-between text-sm">
+                    <span className="truncate mr-3">{item.city}</span>
+                    <span className="font-semibold">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-          <h2 className="font-semibold mb-3">Top Countries</h2>
-          {(summary?.topCountries?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-500">No geo data yet.</p>
+          <h2 className="font-semibold mb-3">User/Visitor Journeys</h2>
+          {journeys.length === 0 ? (
+            <p className="text-sm text-gray-500">No journey data yet.</p>
           ) : (
-            <div className="space-y-2">
-              {summary?.topCountries.map((item) => (
-                <div key={item.country} className="flex items-center justify-between text-sm">
-                  <span className="truncate mr-3">{item.country}</span>
-                  <span className="font-semibold">{item.count}</span>
+            <div className="space-y-4">
+              {journeys.map((journey) => (
+                <div key={journey.key} className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs mb-2">
+                    <span className="px-2 py-1 rounded-full border border-gray-300 dark:border-gray-700 font-semibold">{journey.source}</span>
+                    <span>{journey.user?.email ?? `visitor:${journey.visitorId ?? 'anonymous'}`}</span>
+                    <span className="text-gray-500">{journey.eventCount} events</span>
+                    <span className="text-gray-500">{formatDuration(journey.durationSec)}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {journey.events.map((event) => (
+                      <span key={event.id} className="text-[11px] px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800">
+                        {event.eventType}:{event.path ?? event.label ?? 'event'}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

@@ -159,6 +159,21 @@ export const adminApi = {
     });
   },
 
+  listAnalyticsJourneys: (
+    token: string,
+    params?: { limit?: number; from?: string; to?: string; query?: string },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    if (params?.query) qs.set('query', params.query);
+
+    return request<unknown[]>(`/admin/analytics/journeys${qs.toString() ? `?${qs.toString()}` : ''}`, {
+      token,
+    });
+  },
+
   listUsers: (token: string) =>
     request<unknown[]>('/admin/users', { token }),
 

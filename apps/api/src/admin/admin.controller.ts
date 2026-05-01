@@ -54,6 +54,23 @@ export class AdminController {
     });
   }
 
+  @Get('analytics/journeys')
+  listAnalyticsJourneys(
+    @Query('limit') limit?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('query') query?: string,
+  ) {
+    const parsed = Number(limit);
+    const safeLimit = Number.isFinite(parsed) ? parsed : 40;
+    return this.adminService.listAnalyticsJourneys({
+      limit: safeLimit,
+      from,
+      to,
+      query,
+    });
+  }
+
   @Patch('users/:id/role')
   updateUserRole(
     @Req() req: any,
