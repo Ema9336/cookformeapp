@@ -5,7 +5,7 @@
     "buildCommand": "npm install --include=dev && npm run build"
   },
   "deploy": {
-    "startCommand": "npx prisma migrate deploy && node dist/main",
+    "startCommand": "npx prisma db push --skip-generate && node dist/main",
     "healthcheckPath": "/api",
     "restartPolicyType": "ON_FAILURE"
   }
