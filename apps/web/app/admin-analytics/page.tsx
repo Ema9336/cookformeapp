@@ -42,35 +42,127 @@ const COUNTRY_COORDS: Record<string, [number, number]> = {
   ZA:[-29,25],ZM:[-15,30],ZW:[-20,30],
 };
 
-type GeoEntry = { country: string; count: number };
+// US state centroids keyed by 2-letter code (geoip-lite format)
+const US_STATE_COORDS: Record<string, [number, number]> = {
+  AL:[32.8,-86.8],AK:[64,-153],AZ:[34.3,-111.1],AR:[34.8,-92.2],CA:[36.8,-119.4],
+  CO:[39,-105.5],CT:[41.6,-72.7],DE:[39,-75.5],FL:[28.6,-82.4],GA:[32.7,-83.4],
+  HI:[20.3,-156.4],ID:[44.4,-114.6],IL:[40,-89.2],IN:[39.8,-86.1],IA:[42,-93.2],
+  KS:[38.5,-98.4],KY:[37.5,-85],LA:[30.9,-91.8],ME:[45.4,-69.2],MD:[39,-76.8],
+  MA:[42.3,-71.8],MI:[43.3,-84.5],MN:[46.4,-93.1],MS:[32.7,-89.7],MO:[38.5,-92.5],
+  MT:[46.9,-110.5],NE:[41.5,-99.9],NV:[39.3,-116.6],NH:[43.7,-71.6],NJ:[40,-74.5],
+  NM:[34.5,-106],NY:[42.9,-75.6],NC:[35.6,-79.8],ND:[47.5,-100.4],OH:[40.4,-82.7],
+  OK:[35.5,-97.5],OR:[43.9,-120.6],PA:[40.9,-77.8],RI:[41.7,-71.5],SC:[33.8,-80.9],
+  SD:[44.4,-100.2],TN:[35.8,-86.3],TX:[31,-100],UT:[39.3,-111.1],VT:[44,-72.7],
+  VA:[37.5,-78.5],WA:[47.4,-120.5],WV:[38.6,-80.6],WI:[44.3,-89.8],WY:[43,-107.5],
+  DC:[38.9,-77],PR:[18.2,-66.4],
+};
 
-function GeoVisitorMap({ topCountries }: { topCountries: GeoEntry[] }) {
+// Other country region codes → lat/lon (geoip-lite uses ISO 3166-2 subdivision codes)
+// Key format: "COUNTRY:REGION_CODE"
+const REGION_COORDS: Record<string, [number, number]> = {
+  // Canada provinces
+  "CA:AB":[53.9,-116.6],"CA:BC":[53.7,-127.6],"CA:MB":[55,-97],"CA:NB":[46.6,-66.5],
+  "CA:NL":[53.1,-57.7],"CA:NS":[45,-63],"CA:NT":[64.8,-124.8],"CA:NU":[70,-86],
+  "CA:ON":[51.3,-85.3],"CA:PE":[46.4,-63.2],"CA:QC":[53.1,-70.3],"CA:SK":[54,-106],
+  "CA:YT":[63,-136],
+  // UK regions
+  "GB:ENG":[52.6,-1.5],"GB:SCT":[57,-4],"GB:WLS":[52.3,-3.8],"GB:NIR":[54.6,-6.8],
+  // Germany states
+  "DE:BY":[48.5,11.5],"DE:NW":[51.5,7.5],"DE:BW":[48.5,9],"DE:HE":[50.6,9],
+  "DE:NI":[52.6,9.8],"DE:BE":[52.5,13.4],"DE:HH":[53.5,10],"DE:SN":[51,13],
+  // Australia states
+  "AU:NSW":[-32,147],"AU:VIC":[-36.9,144.5],"AU:QLD":[-22,144],"AU:WA":[-26,122],
+  "AU:SA":[-30,135.8],"AU:TAS":[-42,146.5],"AU:ACT":[-35.5,149.1],"AU:NT":[-20,133],
+  // France regions
+  "FR:IDF":[48.8,2.4],"FR:ARA":[45.7,4.8],"FR:HDF":[50.5,2.8],"FR:OCC":[43.7,2.2],
+  "FR:NAQ":[44.8,-0.6],"FR:BRE":[48.2,-2.9],"FR:NOR":[49.2,0.5],"FR:PAC":[43.8,5.8],
+  // India states
+  "IN:MH":[19.3,75.7],"IN:UP":[27,80.6],"IN:TN":[11,78.7],"IN:KA":[14.5,75.5],
+  "IN:GJ":[22.4,71.5],"IN:RJ":[27,74],"IN:WB":[23,87.9],"IN:AP":[15.9,79.7],
+  // Brazil states
+  "BR:SP":[-22,-47.7],"BR:RJ":[-22.2,-42.7],"BR:MG":[-18,-44.7],"BR:RS":[-29.5,-53.2],
+  "BR:PR":[-24.7,-51.5],"BR:BA":[-12,-41.7],"BR:GO":[-15.8,-49.6],"BR:CE":[-5.2,-39.2],
+  // Mexico states
+  "MX:CMX":[19.4,-99.1],"MX:JAL":[20.7,-103.4],"MX:NLE":[25.5,-99.9],"MX:PUE":[19,-97.9],
+  "MX:MEX":[19.4,-99.7],"MX:VER":[19,-96.1],"MX:YUC":[20.9,-89.1],"MX:TAM":[24.5,-98.5],
+};
+
+type GeoEntry = { country: string; count: number };
+type RegionEntry = { country: string; region: string; count: number };
+
+type TooltipState = { x: number; y: number; label: string; count: number; type: "country" | "region" };
+
+function GeoVisitorMap({
+  topCountries,
+  topRegions,
+}: {
+  topCountries: GeoEntry[];
+  topRegions: RegionEntry[];
+}) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; country: string; count: number } | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const W = 800;
   const H = 400;
 
-  const maxCount = Math.max(...topCountries.map((c) => c.count), 1);
+  const maxCountryCount = Math.max(...topCountries.map((c) => c.count), 1);
+  const maxRegionCount = Math.max(...topRegions.map((r) => r.count), 1);
 
-  const bubbles = topCountries
+  const latLon = (lat: number, lon: number) => ({
+    x: ((lon + 180) / 360) * W,
+    y: ((90 - lat) / 180) * H,
+  });
+
+  // Country ghost rings (dim outline showing country presence)
+  const countryBubbles = topCountries
     .filter((c) => COUNTRY_COORDS[c.country])
     .map((c) => {
       const [lat, lon] = COUNTRY_COORDS[c.country];
-      const x = ((lon + 180) / 360) * W;
-      const y = ((90 - lat) / 180) * H;
-      const r = 4 + Math.sqrt(c.count / maxCount) * 22;
+      const { x, y } = latLon(lat, lon);
+      const r = 5 + Math.sqrt(c.count / maxCountryCount) * 18;
       return { ...c, x, y, r };
     });
 
+  // Region-level filled bubbles
+  const regionBubbles = topRegions.map((r) => {
+    const key = `${r.country}:${r.region}`;
+    // US states get their own lookup; others use REGION_COORDS
+    let coords: [number, number] | undefined;
+    if (r.country === "US") {
+      coords = US_STATE_COORDS[r.region];
+    } else {
+      coords = REGION_COORDS[key];
+    }
+    if (!coords) return null;
+    const [lat, lon] = coords;
+    const { x, y } = latLon(lat, lon);
+    const rv = 3 + Math.sqrt(r.count / maxRegionCount) * 14;
+    return { ...r, x, y, r: rv };
+  }).filter(Boolean) as (RegionEntry & { x: number; y: number; r: number })[];
+
+  const handleEnter = (
+    e: React.MouseEvent,
+    label: string,
+    count: number,
+    type: "country" | "region"
+  ) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (rect) {
+      setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top, label, count, type });
+    }
+  };
+
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-[#0d1117] border border-gray-800" style={{ paddingBottom: "50%" }}>
+    <div
+      className="relative w-full overflow-hidden rounded-xl bg-[#0d1117] border border-gray-800"
+      style={{ paddingBottom: "50%" }}
+    >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
         className="absolute inset-0 w-full h-full"
         onMouseLeave={() => setTooltip(null)}
       >
-        {/* Grid lines for latitude/longitude reference */}
+        {/* Grid */}
         {[-60, -30, 0, 30, 60].map((lat) => {
           const y = ((90 - lat) / 180) * H;
           return <line key={lat} x1={0} y1={y} x2={W} y2={y} stroke="#1f2937" strokeWidth={0.5} />;
@@ -79,53 +171,87 @@ function GeoVisitorMap({ topCountries }: { topCountries: GeoEntry[] }) {
           const x = ((lon + 180) / 360) * W;
           return <line key={lon} x1={x} y1={0} x2={x} y2={H} stroke="#1f2937" strokeWidth={0.5} />;
         })}
-        {/* Equator highlight */}
         <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke="#374151" strokeWidth={1} strokeDasharray="4 4" />
 
-        {/* Bubbles */}
-        {bubbles.map((b) => (
-          <g key={b.country}>
+        {/* Country ghost rings */}
+        {countryBubbles.map((b) => (
+          <circle
+            key={`country-${b.country}`}
+            cx={b.x}
+            cy={b.y}
+            r={b.r}
+            fill="rgba(99,102,241,0.08)"
+            stroke="rgba(99,102,241,0.25)"
+            strokeWidth={1}
+            strokeDasharray="3 2"
+            className="cursor-pointer"
+            onMouseEnter={(e) => handleEnter(e, b.country, b.count, "country")}
+            onMouseLeave={() => setTooltip(null)}
+          />
+        ))}
+
+        {/* Region filled bubbles */}
+        {regionBubbles.map((b) => (
+          <g key={`region-${b.country}-${b.region}`}>
             <circle
               cx={b.x}
               cy={b.y}
               r={b.r}
-              fill="rgba(99,102,241,0.35)"
-              stroke="rgba(129,140,248,0.8)"
+              fill="rgba(99,102,241,0.5)"
+              stroke="rgba(165,180,252,0.9)"
               strokeWidth={1}
               className="cursor-pointer"
-              onMouseEnter={(e) => {
-                const rect = svgRef.current?.getBoundingClientRect();
-                if (rect) {
-                  setTooltip({
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top,
-                    country: b.country,
-                    count: b.count,
-                  });
-                }
-              }}
+              onMouseEnter={(e) =>
+                handleEnter(e, `${b.country} · ${b.region}`, b.count, "region")
+              }
               onMouseLeave={() => setTooltip(null)}
             />
-            {b.r > 12 && (
+            {b.r > 10 && (
               <text
                 x={b.x}
                 y={b.y + 1}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize={9}
+                fontSize={8}
                 fill="rgba(255,255,255,0.9)"
                 className="pointer-events-none select-none"
               >
-                {b.country}
+                {b.region}
               </text>
             )}
           </g>
         ))}
 
+        {/* Country labels for countries with no region breakdown */}
+        {countryBubbles
+          .filter((b) => !regionBubbles.some((rb) => rb.country === b.country))
+          .map((b) => (
+            b.r > 12 ? (
+              <text
+                key={`label-${b.country}`}
+                x={b.x}
+                y={b.y + 1}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={9}
+                fill="rgba(129,140,248,0.9)"
+                className="pointer-events-none select-none"
+              >
+                {b.country}
+              </text>
+            ) : null
+          ))}
+
         {/* Axis labels */}
         <text x={4} y={12} fontSize={8} fill="#6b7280">60°N</text>
         <text x={4} y={H / 2 - 4} fontSize={8} fill="#6b7280">EQ</text>
         <text x={4} y={H - 4} fontSize={8} fill="#6b7280">60°S</text>
+
+        {/* Legend */}
+        <circle cx={W - 120} cy={H - 20} r={5} fill="rgba(99,102,241,0.08)" stroke="rgba(99,102,241,0.25)" strokeWidth={1} strokeDasharray="3 2"/>
+        <text x={W - 113} y={H - 19} fontSize={7} fill="#6b7280" dominantBaseline="middle">Country</text>
+        <circle cx={W - 68} cy={H - 20} r={5} fill="rgba(99,102,241,0.5)" stroke="rgba(165,180,252,0.9)" strokeWidth={1}/>
+        <text x={W - 61} y={H - 19} fontSize={7} fill="#6b7280" dominantBaseline="middle">Region</text>
       </svg>
 
       {tooltip && (
@@ -133,8 +259,9 @@ function GeoVisitorMap({ topCountries }: { topCountries: GeoEntry[] }) {
           className="absolute pointer-events-none z-10 bg-black/90 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white shadow-xl"
           style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
         >
-          <span className="font-semibold">{tooltip.country}</span>
+          <span className="font-semibold">{tooltip.label}</span>
           <span className="ml-2 text-indigo-400">{tooltip.count.toLocaleString()} events</span>
+          <span className="ml-1 text-gray-500">({tooltip.type})</span>
         </div>
       )}
     </div>
@@ -157,7 +284,7 @@ type AnalyticsSummary = {
   topPages: { path: string; count: number }[];
   topClicks: { label: string; count: number }[];
   topCountries: { country: string; count: number }[];
-  topRegions: { region: string; count: number }[];
+  topRegions: { country: string; region: string; count: number }[];
   topCities: { city: string; count: number }[];
   funnel: {
     key: string;
@@ -660,7 +787,7 @@ export default function AdminAnalyticsPage() {
           {(summary?.topCountries?.length ?? 0) === 0 ? (
             <p className="text-sm text-gray-500">No geo data yet.</p>
           ) : (
-            <GeoVisitorMap topCountries={summary!.topCountries} />
+            <GeoVisitorMap topCountries={summary!.topCountries} topRegions={summary!.topRegions} />
           )}
         </div>
 
@@ -688,8 +815,8 @@ export default function AdminAnalyticsPage() {
             ) : (
               <div className="space-y-2">
                 {summary?.topRegions.map((item) => (
-                  <div key={item.region} className="flex items-center justify-between text-sm">
-                    <span className="truncate mr-3">{item.region}</span>
+                  <div key={`${item.country}-${item.region}`} className="flex items-center justify-between text-sm">
+                    <span className="truncate mr-3">{item.country ? `${item.country} · ` : ""}{item.region}</span>
                     <span className="font-semibold">{item.count}</span>
                   </div>
                 ))}

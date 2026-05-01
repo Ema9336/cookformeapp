@@ -131,7 +131,7 @@ export class AdminService {
     const pageCounts = new Map<string, number>();
     const clickCounts = new Map<string, number>();
     const countryCounts = new Map<string, number>();
-    const regionCounts = new Map<string, number>();
+    const regionCounts = new Map<string, { country: string; region: string; count: number }>();
     const cityCounts = new Map<string, number>();
     const sessionTimes = new Map<string, { min: number; max: number }>();
     const sessionSource = new Map<string, TrafficSource>();
@@ -150,7 +150,13 @@ export class AdminService {
       }
 
       if (event.region) {
-        regionCounts.set(event.region, (regionCounts.get(event.region) ?? 0) + 1);
+        const key = `${country ?? ''}:${event.region}`;
+        const existing = regionCounts.get(key);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          regionCounts.set(key, { country: country ?? '', region: event.region, count: 1 });
+        }
       }
 
       if (event.city) {
@@ -189,10 +195,9 @@ export class AdminService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    const topRegions = Array.from(regionCounts.entries())
-      .map(([region, count]) => ({ region, count }))
+    const topRegions = Array.from(regionCounts.values())
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+      .slice(0, 20);
 
     const topCities = Array.from(cityCounts.entries())
       .map(([city, count]) => ({ city, count }))
