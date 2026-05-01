@@ -29,9 +29,17 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already in use');
 
+    const adminEmails = (this.config.get<string>('ADMIN_EMAILS') ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+    const role = adminEmails.includes(dto.email.trim().toLowerCase())
+      ? Role.ADMIN
+      : Role.CUSTOMER;
+
     const hashed = await bcrypt.hash(dto.password, SALT_ROUNDS);
     const user = await this.prisma.user.create({
-      data: { email: dto.email, name: dto.name, password: hashed, role: Role.CUSTOMER },
+      data: { email: dto.email, name: dto.name, password: hashed, role },
     });
 
     return this.issueTokens(user.id, user.email, user.role);
