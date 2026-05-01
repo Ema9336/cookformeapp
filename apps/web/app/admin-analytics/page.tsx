@@ -1,9 +1,146 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../hooks/useAuth";
 import { adminApi } from "../../lib/api";
+
+// ── Geo bubble map ────────────────────────────────────────────────────────────
+// Approximate lat/lon centroids for ~90 common countries (ISO 3166-1 alpha-2)
+const COUNTRY_COORDS: Record<string, [number, number]> = {
+  AD:[42.5,1.5],AE:[24,54],AF:[33,65],AG:[17.1,-61.8],AL:[41,20],AM:[40,45],
+  AO:[-11.2,17.9],AR:[-34,-64],AT:[47.3,13.3],AU:[-27,133],AZ:[40.3,47.6],
+  BA:[44,17.5],BD:[24,90],BE:[50.8,4],BF:[13,-2],BG:[43,25],BH:[26,50.5],
+  BI:[-3.5,30],BJ:[9.3,2.3],BN:[4.9,115],BO:[-17,-65],BR:[-15,-47],BS:[24.3,-76],
+  BT:[27.5,90.5],BW:[-22,24],BY:[53,28],BZ:[17.3,-88.7],CA:[56,-96],
+  CD:[-4,25],CF:[7,21],CG:[-1,15],CH:[47,8],CI:[7.5,-5.5],CL:[-30,-71],
+  CM:[6,12],CN:[35,103],CO:[4,-72],CR:[10,-84],CU:[21.5,-79.5],CV:[15,-24],
+  CY:[35,33],CZ:[50,15.5],DE:[51,10],DJ:[11.5,42.5],DK:[56,10],DM:[15.4,-61.4],
+  DO:[19,-70.7],DZ:[28,3],EC:[-2,-77.5],EE:[59,25],EG:[27,30],ER:[15,39],
+  ES:[40,-4],ET:[8,38],FI:[64,26],FJ:[-18,178],FR:[46,2],GA:[-1,11.7],
+  GB:[55.4,-3.4],GE:[42,43.5],GH:[8,-1],GM:[13.5,-15.5],GN:[11,-11.8],
+  GQ:[2,10],GR:[39,22],GT:[15.5,-90.3],GW:[12,-15],GY:[5,-59],HN:[15,-86.5],
+  HR:[45.2,16.5],HT:[19,-72.3],HU:[47,19.5],ID:[-5,120],IE:[53,-8],IL:[31.5,35],
+  IN:[20,77],IQ:[33,44],IR:[32,53],IS:[65,-18],IT:[43,12],JM:[18,-77.3],
+  JO:[31,36],JP:[36,138],KE:[1,38],KG:[41.2,74.8],KH:[12.5,104.9],KM:[-12.2,44.4],
+  KP:[40,127],KR:[37,128],KW:[29,47.7],KZ:[48,68],LA:[18,103],LB:[33.9,35.5],
+  LK:[7.9,80.8],LR:[6.4,-9.4],LS:[-29.5,28.5],LT:[56,24],LU:[49.8,6.1],
+  LV:[57,25],LY:[27,17],MA:[32,-5],MD:[47,29],MG:[-20,47],MK:[41.6,21.7],
+  ML:[17,-4],MM:[17,96],MN:[46,105],MR:[20,-12],MT:[35.9,14.4],MU:[-20.2,57.5],
+  MV:[3.2,73],MW:[-13.5,34],MX:[24,-102],MY:[2.5,112.5],MZ:[-18,35],
+  NA:[-22,17],NE:[16,8],NG:[10,8],NI:[13,-85],NL:[52.3,5.3],NO:[62,10],
+  NP:[28,84],NZ:[-41,174],OM:[22,57],PA:[9,-80],PE:[-10,-76],PG:[-6,147],
+  PH:[13,122],PK:[30,70],PL:[52,20],PT:[39.5,-8],PW:[7.5,134.6],PY:[-23,-58],
+  QA:[25.5,51.2],RO:[46,25],RS:[44,21],RU:[60,100],RW:[-2,30],SA:[25,45],
+  SB:[-8,160],SC:[-4.6,55.5],SD:[15,30],SE:[62,15],SG:[1.4,103.8],
+  SI:[46,15],SK:[48.7,19.5],SL:[8.5,-11.8],SM:[43.9,12.5],SN:[14,-14],
+  SO:[10,49],SR:[4,-56],ST:[1,7],SV:[14,-89],SY:[35,38],SZ:[-26.5,31.5],
+  TD:[15,19],TG:[8,1.2],TH:[15,101],TJ:[39,71],TM:[40,60],TN:[34,9],
+  TO:[-20.2,-175.2],TR:[39,35],TT:[11,-61],TW:[24,121],TZ:[-6,35],UA:[49,32],
+  UG:[1,32],US:[38,-97],UY:[-33,-56],UZ:[41,64],VA:[41.9,12.5],VC:[13,-61.2],
+  VE:[8,-66],VN:[16,108],VU:[-16,167],WS:[-13.6,-172.4],YE:[15,48],
+  ZA:[-29,25],ZM:[-15,30],ZW:[-20,30],
+};
+
+type GeoEntry = { country: string; count: number };
+
+function GeoVisitorMap({ topCountries }: { topCountries: GeoEntry[] }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; country: string; count: number } | null>(null);
+  const W = 800;
+  const H = 400;
+
+  const maxCount = Math.max(...topCountries.map((c) => c.count), 1);
+
+  const bubbles = topCountries
+    .filter((c) => COUNTRY_COORDS[c.country])
+    .map((c) => {
+      const [lat, lon] = COUNTRY_COORDS[c.country];
+      const x = ((lon + 180) / 360) * W;
+      const y = ((90 - lat) / 180) * H;
+      const r = 4 + Math.sqrt(c.count / maxCount) * 22;
+      return { ...c, x, y, r };
+    });
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-xl bg-[#0d1117] border border-gray-800" style={{ paddingBottom: "50%" }}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="absolute inset-0 w-full h-full"
+        onMouseLeave={() => setTooltip(null)}
+      >
+        {/* Grid lines for latitude/longitude reference */}
+        {[-60, -30, 0, 30, 60].map((lat) => {
+          const y = ((90 - lat) / 180) * H;
+          return <line key={lat} x1={0} y1={y} x2={W} y2={y} stroke="#1f2937" strokeWidth={0.5} />;
+        })}
+        {[-120, -60, 0, 60, 120].map((lon) => {
+          const x = ((lon + 180) / 360) * W;
+          return <line key={lon} x1={x} y1={0} x2={x} y2={H} stroke="#1f2937" strokeWidth={0.5} />;
+        })}
+        {/* Equator highlight */}
+        <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke="#374151" strokeWidth={1} strokeDasharray="4 4" />
+
+        {/* Bubbles */}
+        {bubbles.map((b) => (
+          <g key={b.country}>
+            <circle
+              cx={b.x}
+              cy={b.y}
+              r={b.r}
+              fill="rgba(99,102,241,0.35)"
+              stroke="rgba(129,140,248,0.8)"
+              strokeWidth={1}
+              className="cursor-pointer"
+              onMouseEnter={(e) => {
+                const rect = svgRef.current?.getBoundingClientRect();
+                if (rect) {
+                  setTooltip({
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top,
+                    country: b.country,
+                    count: b.count,
+                  });
+                }
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            />
+            {b.r > 12 && (
+              <text
+                x={b.x}
+                y={b.y + 1}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={9}
+                fill="rgba(255,255,255,0.9)"
+                className="pointer-events-none select-none"
+              >
+                {b.country}
+              </text>
+            )}
+          </g>
+        ))}
+
+        {/* Axis labels */}
+        <text x={4} y={12} fontSize={8} fill="#6b7280">60°N</text>
+        <text x={4} y={H / 2 - 4} fontSize={8} fill="#6b7280">EQ</text>
+        <text x={4} y={H - 4} fontSize={8} fill="#6b7280">60°S</text>
+      </svg>
+
+      {tooltip && (
+        <div
+          className="absolute pointer-events-none z-10 bg-black/90 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white shadow-xl"
+          style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
+        >
+          <span className="font-semibold">{tooltip.country}</span>
+          <span className="ml-2 text-indigo-400">{tooltip.count.toLocaleString()} events</span>
+        </div>
+      )}
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 type AnalyticsSummary = {
   from: string;
@@ -512,6 +649,19 @@ export default function AdminAnalyticsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Geo bubble map */}
+        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Visitor Geo Map</h2>
+            <span className="text-xs text-gray-500">bubble size = event volume</span>
+          </div>
+          {(summary?.topCountries?.length ?? 0) === 0 ? (
+            <p className="text-sm text-gray-500">No geo data yet.</p>
+          ) : (
+            <GeoVisitorMap topCountries={summary!.topCountries} />
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
