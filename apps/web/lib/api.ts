@@ -119,6 +119,27 @@ export const analyticsApi = {
     request<{ ok: boolean }>('/analytics/events', { method: 'POST', body: data }),
 };
 
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export type AppNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  bookingId: string | null;
+  createdAt: string;
+};
+
+export const notificationsApi = {
+  list: (token: string) =>
+    request<{ notifications: AppNotification[]; unread: number }>('/notifications', { token }),
+  markRead: (token: string, id: string) =>
+    request<{ ok: boolean }>(`/notifications/${id}/read`, { method: 'PATCH', token }),
+  markAllRead: (token: string) =>
+    request<{ ok: boolean }>('/notifications/read-all', { method: 'PATCH', token }),
+};
+
 // ─── Admin ─────────────────────────────────────────────────────────────────
 
 export const adminApi = {

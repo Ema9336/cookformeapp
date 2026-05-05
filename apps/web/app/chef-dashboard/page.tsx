@@ -89,6 +89,7 @@ export default function ChefDashboardPage() {
   const { accessToken } = useAuth();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "accepted" | "completed">("all");
+  const [activeSection, setActiveSection] = useState<"orders" | "earnings">("orders");
   const [listingActive, setListingActive] = useState(true);
 
   useEffect(() => {
@@ -125,9 +126,24 @@ export default function ChefDashboardPage() {
     activeTab === "all" ? orders : orders.filter((o) => o.status === activeTab);
 
   const pendingCount = orders.filter((o) => o.status === "pending").length;
-  const weekEarnings = orders
-    .filter((o) => o.status === "completed")
-    .reduce((sum, o) => sum + parseFloat(o.total.replace("$", "").replace(",", "")), 0);
+  const completedOrders = orders.filter((o) => o.status === "completed");
+  const weekEarnings = completedOrders
+    .reduce((sum, o) => sum + parseFloat(o.total.replace(/[^0-9.]/g, "") || "0"), 0);
+  const lifetimeEarnings = completedOrders
+    .reduce((sum, o) => sum + parseFloat(o.total.replace(/[^0-9.]/g, "") || "0"), 0);
+
+  // Monthly earnings breakdown
+  const monthlyEarnings = completedOrders.reduce<Record<string, number>>((acc, o) => {
+    const label = o.date.split(" ").slice(1, 3).join(" "); // e.g. "Apr 20"
+    const month = o.date.includes(" ") ? o.date.split(" ").slice(1, 2).join("") : "Other";
+    const key = month || "Other";
+    const amt = parseFloat(o.total.replace(/[^0-9.]/g, "") || "0");
+    acc[key] = (acc[key] ?? 0) + amt;
+    return acc;
+  }, {});
+  const monthlyRows = Object.entries(monthlyEarnings)
+    .map(([month, total]) => ({ month, total }))
+    .sort((a, b) => b.total - a.total);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-black dark:text-white">
@@ -228,7 +244,105 @@ export default function ChefDashboardPage() {
           </div>
         )}
 
-        {/* Orders */}
+        {/* Section tabs */}
+        <div className="flex gap-2 bg-gray-100 dark:bg-zinc-900 rounded-2xl p-1 self-start">
+          {(["orders", "earnings"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setActiveSection(s)}
+              className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition ${
+                activeSection === s
+                  ? "bg-white dark:bg-zinc-800 shadow text-black dark:text-white"
+                  : "text-gray-500"
+              }`}
+            >
+              {s === "earnings" ? "💰 Earnings" : "📋 Orders"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── EARNINGS PANEL ──────────────────────────────────────────────── */}
+        {activeSection === "earnings" && (
+          <div className="space-y-6">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Lifetime Earned</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">${lifetimeEarnings.toLocaleString("en-US", { minimumFractionDigits: 0 })}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{completedOrders.length} completed bookings</p>
+              </div>
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Avg. per Booking</p>
+                <p className="text-2xl font-bold mt-1">
+                  ${completedOrders.length > 0 ? (lifetimeEarnings / completedOrders.length).toFixed(0) : "—"}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">across completed orders</p>
+              </div>
+              <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Pending Payout</p>
+                <p className="text-2xl font-bold text-amber-600 mt-1">
+                  ${orders.filter(o => o.status === "accepted")
+                      .reduce((s, o) => s + parseFloat(o.total.replace(/[^0-9.]/g, "") || "0"), 0)
+                      .toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">from accepted orders</p>
+              </div>
+            </div>
+
+            {/* Monthly breakdown */}
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-5">
+              <h3 className="font-semibold mb-4">Breakdown by Month</h3>
+              {monthlyRows.length === 0 ? (
+                <p className="text-sm text-gray-400">No completed earnings yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {monthlyRows.map(({ month, total }) => {
+                    const pct = (total / lifetimeEarnings) * 100;
+                    return (
+                      <div key={month} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{month}</span>
+                          <span className="font-bold text-green-600">${total.toLocaleString()}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                          <div
+                            className="h-full bg-green-500 rounded-full"
+                            style={{ width: `${Math.max(2, pct)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Per-booking list */}
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black overflow-hidden">
+              <div className="grid grid-cols-12 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-100 dark:border-gray-900">
+                <div className="col-span-3">Date</div>
+                <div className="col-span-4">Customer</div>
+                <div className="col-span-3">Service</div>
+                <div className="col-span-2 text-right">Amount</div>
+              </div>
+              {completedOrders.length === 0 ? (
+                <div className="py-10 text-center text-sm text-gray-400">No completed bookings yet.</div>
+              ) : (
+                completedOrders.map((o) => (
+                  <div key={o.id} className="grid grid-cols-12 px-5 py-3 text-sm border-b last:border-b-0 border-gray-100 dark:border-gray-900 items-center">
+                    <div className="col-span-3 text-gray-500 text-xs">{o.date}</div>
+                    <div className="col-span-4 font-medium truncate">{o.customer}</div>
+                    <div className="col-span-3 text-gray-500 text-xs truncate">{o.item}</div>
+                    <div className="col-span-2 text-right font-bold text-green-600">{o.total}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ORDERS PANEL ────────────────────────────────────────────────── */}
+        {activeSection === "orders" && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Orders</h2>
@@ -326,6 +440,7 @@ export default function ChefDashboardPage() {
             ))}
           </div>
         </div>
+        )} {/* end orders section */}
 
       </div>
     </main>

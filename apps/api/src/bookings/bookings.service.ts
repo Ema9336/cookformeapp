@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../notifications/email.service';
+import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { BookingStatus } from '@prisma/client';
 
@@ -9,6 +10,7 @@ export class BookingsService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private inAppNotifications: InAppNotificationsService,
   ) {}
 
   async create(customerId: string, dto: CreateBookingDto) {
@@ -59,6 +61,23 @@ export class BookingsService {
       );
     }
 
+    // In-app notifications
+    const dateStr = booking.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    this.inAppNotifications.create(
+      chef.userId,
+      'BOOKING_NEW',
+      'New booking request',
+      `${customer?.name ?? 'A customer'} requested a booking for ${dateStr} (${booking.serviceType})`,
+      booking.id,
+    );
+    this.inAppNotifications.create(
+      customerId,
+      'BOOKING_PENDING',
+      'Booking submitted',
+      `Your booking with ${chef.user.name ?? 'the chef'} on ${dateStr} is pending confirmation.`,
+      booking.id,
+    );
+
     return booking;
   }
 
@@ -102,6 +121,30 @@ export class BookingsService {
         status,
         booking.chef.user.name || 'Chef',
       );
+    }
+
+    // In-app notification to customer
+    const dateStr = booking.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const statusMessages: Record<string, { type: string; title: string; body: string }> = {
+      ACCEPTED: {
+        type: 'BOOKING_ACCEPTED',
+        title: 'Booking accepted!',
+        body: `${booking.chef.user.name ?? 'Your chef'} accepted your booking for ${dateStr}.`,
+      },
+      DECLINED: {
+        type: 'BOOKING_DECLINED',
+        title: 'Booking declined',
+        body: `${booking.chef.user.name ?? 'Your chef'} declined your booking for ${dateStr}.`,
+      },
+      COMPLETED: {
+        type: 'BOOKING_COMPLETED',
+        title: 'Booking completed',
+        body: `Your booking with ${booking.chef.user.name ?? 'the chef'} on ${dateStr} has been marked as complete.`,
+      },
+    };
+    const msg = statusMessages[status];
+    if (msg) {
+      this.inAppNotifications.create(booking.customerId, msg.type, msg.title, msg.body, bookingId);
     }
 
     return updated;

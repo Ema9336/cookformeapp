@@ -8,6 +8,7 @@ import { useUserLocation } from "../hooks/useUserLocation";
 import { useAllChefs } from "../hooks/useAllChefs";
 import { calcDistanceMiles } from "../utils/calcDistance";
 import { useAuth } from "../hooks/useAuth";
+import { NotificationBell } from "../components/notification-bell";
 
 // ─── Filter constants ─────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 export default function HomePage() {
   const { location: userLocation, loading, error, retry } = useUserLocation();
   const dynamicChefs = useAllChefs(userLocation);
-  const { user, logout } = useAuth();
+  const { user, logout, accessToken } = useAuth();
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +41,8 @@ export default function HomePage() {
   const [maxDistance, setMaxDistance] = useState(50);
   const [sortBy, setSortBy] = useState<SortOption>("distance");
   const [showFilters, setShowFilters] = useState(false);
+  const [minRating, setMinRating] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(500);
 
   // Chefs with computed distance
   const chefsWithDistance = useMemo(() =>
@@ -88,6 +91,21 @@ export default function HomePage() {
       result = result.filter((c) => (c as typeof c & { distanceNum: number }).distanceNum <= maxDistance);
     }
 
+    // Min rating filter
+    if (minRating > 0) {
+      result = result.filter((c) => parseFloat(c.rating) >= minRating);
+    }
+
+    // Max price filter (parse starting price like "$45" or "45")
+    if (maxPrice < 500) {
+      result = result.filter((c) => {
+        const sp = (c as typeof c & { startingPrice?: string }).startingPrice;
+        if (!sp) return true;
+        const num = parseFloat(String(sp).replace(/[^0-9.]/g, ""));
+        return isNaN(num) || num <= maxPrice;
+      });
+    }
+
     // Sort
     if (sortBy === "distance") {
       result = [...result].sort((a, b) =>
@@ -101,7 +119,7 @@ export default function HomePage() {
     }
 
     return result;
-  }, [chefsWithDistance, searchQuery, activeCategory, activeTags, maxDistance, sortBy, userLocation]);
+  }, [chefsWithDistance, searchQuery, activeCategory, activeTags, maxDistance, sortBy, userLocation, minRating, maxPrice]);
 
   const toggleTag = (tag: string) =>
     setActiveTags((prev) =>
@@ -114,10 +132,12 @@ export default function HomePage() {
     setActiveTags([]);
     setMaxDistance(50);
     setSortBy("distance");
+    setMinRating(0);
+    setMaxPrice(500);
   };
 
   const hasActiveFilters =
-    searchQuery || activeCategory !== "All" || activeTags.length > 0 || maxDistance < 50;
+    searchQuery || activeCategory !== "All" || activeTags.length > 0 || maxDistance < 50 || minRating > 0 || maxPrice < 500;
 
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white transition-colors">
@@ -143,6 +163,7 @@ export default function HomePage() {
                   Admin
                 </Link>
               )}
+              {accessToken && <NotificationBell token={accessToken} />}
               <button
                 onClick={() => logout()}
                 className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-700"
@@ -206,7 +227,7 @@ export default function HomePage() {
                 <span className="hidden sm:inline">Filters</span>
                 {hasActiveFilters && (
                   <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center font-bold">
-                    {[activeCategory !== "All", activeTags.length > 0, maxDistance < 50].filter(Boolean).length}
+                    {[activeCategory !== "All", activeTags.length > 0, maxDistance < 50, minRating > 0, maxPrice < 500].filter(Boolean).length}
                   </span>
                 )}
               </button>
@@ -289,6 +310,50 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
+
+              {/* Min Rating */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-semibold">Minimum Rating</p>
+                  <span className="text-sm font-bold text-yellow-500">{minRating > 0 ? `${minRating}+ ★` : "Any"}</span>
+                </div>
+                <div className="flex gap-2">
+                  {[0, 3, 3.5, 4, 4.5].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setMinRating(r)}
+                      className={`px-3 py-1.5 rounded-full border text-xs font-medium transition ${
+                        minRating === r
+                          ? "bg-yellow-400 text-black border-yellow-400"
+                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800"
+                      }`}
+                    >
+                      {r === 0 ? "Any" : `${r}+★`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Max Starting Price */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-semibold">Max Starting Price</p>
+                  <span className="text-sm font-bold text-green-600">{maxPrice < 500 ? `$${maxPrice}` : "Any"}</span>
+                </div>
+                <input
+                  type="range"
+                  min={20}
+                  max={500}
+                  step={10}
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-green-600"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>$20</span>
+                  <span>Any</span>
+                </div>
+              </div>
 
               {/* Sort */}
               <div>
