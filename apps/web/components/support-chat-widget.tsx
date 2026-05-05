@@ -2,7 +2,12 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { trackAnalyticsEvent } from "../lib/analytics";
-import { findBestFaqAnswer, SUPPORT_FAQ } from "../lib/support-faq";
+import {
+  findBestFaqMatch,
+  getQuickTopics,
+  type SupportAudience,
+  type SupportFaqEntry,
+} from "../lib/support-faq";
 
 type ChatMessage = {
   role: "bot" | "user";
@@ -16,35 +21,44 @@ const WELCOME_MESSAGE: ChatMessage = {
 
 export default function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [audience, setAudience] = useState<SupportAudience>("customer");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [showContact, setShowContact] = useState(false);
+  const [suggestions, setSuggestions] = useState<SupportFaqEntry[]>([]);
+  const [lastAnsweredFaqId, setLastAnsweredFaqId] = useState<string | null>(null);
+  const [feedbackSent, setFeedbackSent] = useState(false);
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
-  const quickTopics = useMemo(() => SUPPORT_FAQ.slice(0, 6), []);
+  const quickTopics = useMemo(() => getQuickTopics(audience, 6), [audience]);
 
   const askQuestion = (question: string) => {
     const userMessage: ChatMessage = { role: "user", text: question };
-    const match = findBestFaqAnswer(question);
+    const match = findBestFaqMatch(question, audience);
 
-    const botMessage: ChatMessage = match
-      ? { role: "bot", text: match.answer }
+    const botMessage: ChatMessage = match.best
+      ? { role: "bot", text: match.best.answer }
       : {
           role: "bot",
           text:
-            "I could not find a precise answer yet. Please use Contact Support below and include your booking email so we can help quickly.",
+            "I could not find a precise answer yet. Try one of the suggested questions below or use Contact Support and include your booking email.",
         };
 
     setMessages((prev) => [...prev, userMessage, botMessage]);
-    setShowContact(!match);
+    setShowContact(!match.best);
+    setSuggestions(match.best ? match.alternatives : match.alternatives.slice(0, 3));
+    setLastAnsweredFaqId(match.best?.id ?? null);
+    setFeedbackSent(false);
 
     trackAnalyticsEvent({
       eventType: "CUSTOM",
-      label: match ? "support_chat_answered" : "support_chat_unanswered",
+      label: match.best ? "support_chat_answered" : "support_chat_unanswered",
       metadata: {
         question,
-        matchedFaqId: match?.id,
+        matchedFaqId: match.best?.id,
+        matchScore: match.score,
+        audience,
       },
     });
   };
@@ -62,6 +76,19 @@ export default function SupportChatWidget() {
     askQuestion(question);
   };
 
+  const onFeedback = (helpful: boolean) => {
+    if (!lastAnsweredFaqId || feedbackSent) return;
+    setFeedbackSent(true);
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: helpful ? "support_chat_feedback_helpful" : "support_chat_feedback_unhelpful",
+      metadata: {
+        faqId: lastAnsweredFaqId,
+        audience,
+      },
+    });
+  };
+
   const onContactSupportClick = () => {
     trackAnalyticsEvent({
       eventType: "CUSTOM",
@@ -69,7 +96,18 @@ export default function SupportChatWidget() {
       metadata: {
         hasName: Boolean(contactName.trim()),
         hasEmail: Boolean(contactEmail.trim()),
+        audience,
       },
+    });
+  };
+
+  const onToggleOpen = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: next ? "support_chat_opened" : "support_chat_closed",
+      metadata: { audience },
     });
   };
 
@@ -84,6 +122,20 @@ export default function SupportChatWidget() {
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-green-600 to-emerald-500 text-white">
             <p className="text-sm font-semibold">Customer Support</p>
             <p className="text-xs text-emerald-50">Free FAQ assistant</p>
+            <div className="mt-2 inline-flex rounded-full border border-white/30 bg-black/10 p-0.5 text-[11px]">
+              <button
+                onClick={() => setAudience("customer")}
+                className={`px-2 py-1 rounded-full ${audience === "customer" ? "bg-white text-green-700" : "text-white/90"}`}
+              >
+                Customer
+              </button>
+              <button
+                onClick={() => setAudience("chef")}
+                className={`px-2 py-1 rounded-full ${audience === "chef" ? "bg-white text-green-700" : "text-white/90"}`}
+              >
+                Chef
+              </button>
+            </div>
           </div>
 
           <div className="p-3 max-h-72 overflow-y-auto space-y-2 bg-gray-50 dark:bg-zinc-900">
@@ -113,6 +165,43 @@ export default function SupportChatWidget() {
                 </button>
               ))}
             </div>
+
+            {lastAnsweredFaqId && (
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-500">Was this helpful?</span>
+                <button
+                  onClick={() => onFeedback(true)}
+                  disabled={feedbackSent}
+                  className="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => onFeedback(false)}
+                  disabled={feedbackSent}
+                  className="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-700 disabled:opacity-50"
+                >
+                  No
+                </button>
+              </div>
+            )}
+
+            {suggestions.length > 0 && (
+              <div>
+                <p className="text-[11px] text-gray-500 mb-1">Try these:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map((topic) => (
+                    <button
+                      key={`suggest-${topic.id}`}
+                      onClick={() => onQuickTopic(topic.question)}
+                      className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-gray-700 hover:border-green-500 transition"
+                    >
+                      {topic.question}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <form onSubmit={onSubmit} className="flex gap-2">
               <input
@@ -163,7 +252,7 @@ export default function SupportChatWidget() {
       )}
 
       <button
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={onToggleOpen}
         className="rounded-full px-4 py-3 bg-black text-white dark:bg-white dark:text-black text-sm font-semibold shadow-lg"
       >
         {isOpen ? "Close Support" : "Chat Support"}
