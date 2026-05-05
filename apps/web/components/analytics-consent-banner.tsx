@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   getAnalyticsConsent,
   setAnalyticsConsent,
@@ -36,7 +37,10 @@ export default function AnalyticsConsentBanner() {
         <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-[100] rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-black shadow-xl p-4">
           <p className="text-sm font-semibold">Privacy & Analytics</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-            We use first-party analytics to improve the product. You can choose whether to allow analytics tracking.
+            We use first-party analytics to improve the product. You can choose whether to allow analytics tracking.{" "}
+            <Link href="/privacy" className="underline hover:text-gray-900 dark:hover:text-white">
+              Privacy &amp; Cookie Policy
+            </Link>
           </p>
           <div className="mt-3 flex gap-2">
             <button
