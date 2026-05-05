@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   getAnalyticsConsent,
@@ -10,8 +10,16 @@ import {
 } from "../lib/analytics";
 
 export default function AnalyticsConsentBanner() {
-  const [consent, setConsent] = useState<AnalyticsConsent>(() => getAnalyticsConsent());
-  const [open, setOpen] = useState(() => getAnalyticsConsent() === "unknown");
+  const [mounted, setMounted] = useState(false);
+  const [consent, setConsent] = useState<AnalyticsConsent>("unknown");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = getAnalyticsConsent();
+    setConsent(stored);
+    setOpen(stored === "unknown");
+    setMounted(true);
+  }, []);
 
   const accept = () => {
     setAnalyticsConsent("granted");
@@ -30,6 +38,8 @@ export default function AnalyticsConsentBanner() {
     setConsent("denied");
     setOpen(false);
   };
+
+  if (!mounted) return null;
 
   return (
     <>
