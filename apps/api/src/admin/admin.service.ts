@@ -210,7 +210,7 @@ export class AdminService {
 
     const topRegions = Array.from(regionCounts.values())
       .sort((a, b) => b.count - a.count)
-      .slice(0, 20);
+      .slice(0, 100);
 
     const topCities = Array.from(cityCounts.entries())
       .map(([city, count]) => ({ city, count }))

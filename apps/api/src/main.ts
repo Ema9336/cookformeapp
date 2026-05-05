@@ -8,6 +8,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Needed behind Railway/Reverse proxies so req.ip and forwarded headers resolve correctly.
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
+
   // Security headers
   app.use(helmet());
   app.use(cookieParser());

@@ -15,6 +15,94 @@ export class AnalyticsService {
     private readonly config: ConfigService,
   ) {}
 
+  private normalizeIp(value?: string | null) {
+    if (!value) return null;
+
+    let ip = value.trim();
+    if (!ip) return null;
+
+    // x-forwarded-for may include comma-separated values.
+    if (ip.includes(',')) {
+      ip = ip.split(',')[0].trim();
+    }
+
+    // Remove enclosing brackets for IPv6 values: [::1]
+    ip = ip.replace(/^\[|\]$/g, '');
+
+    // Strip IPv4-mapped IPv6 prefix.
+    if (ip.startsWith('::ffff:')) {
+      ip = ip.slice(7);
+    }
+
+    // Strip IPv4 port if present: 203.0.113.7:52341
+    if (/^\d{1,3}(\.\d{1,3}){3}:\d+$/.test(ip)) {
+      ip = ip.split(':')[0];
+    }
+
+    return ip;
+  }
+
+  private isPublicIp(ip: string) {
+    // IPv4 private/reserved ranges
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+      const parts = ip.split('.').map((p) => Number(p));
+      if (parts.some((n) => Number.isNaN(n) || n < 0 || n > 255)) return false;
+
+      const [a, b] = parts;
+      if (a === 10) return false;
+      if (a === 127) return false;
+      if (a === 0) return false;
+      if (a === 169 && b === 254) return false;
+      if (a === 172 && b >= 16 && b <= 31) return false;
+      if (a === 192 && b === 168) return false;
+      if (a >= 224) return false;
+      return true;
+    }
+
+    // Basic IPv6 local checks.
+    const lower = ip.toLowerCase();
+    if (lower === '::1') return false;
+    if (lower.startsWith('fc') || lower.startsWith('fd')) return false; // unique local
+    if (lower.startsWith('fe80')) return false; // link-local
+    return ip.includes(':');
+  }
+
+  private extractClientIp(req: Request) {
+    const headerNames = [
+      'cf-connecting-ip',
+      'true-client-ip',
+      'x-real-ip',
+      'x-client-ip',
+      'fly-client-ip',
+      'x-vercel-forwarded-for',
+      'x-forwarded-for',
+    ] as const;
+
+    const candidates: string[] = [];
+
+    for (const name of headerNames) {
+      const raw = req.headers[name];
+      if (!raw) continue;
+
+      if (Array.isArray(raw)) {
+        for (const value of raw) {
+          candidates.push(...value.split(',').map((v) => v.trim()));
+        }
+      } else {
+        candidates.push(...raw.split(',').map((v) => v.trim()));
+      }
+    }
+
+    if (req.ip) candidates.push(req.ip);
+
+    const normalized = candidates
+      .map((c) => this.normalizeIp(c))
+      .filter((c): c is string => Boolean(c));
+
+    const bestPublic = normalized.find((ip) => this.isPublicIp(ip));
+    return bestPublic ?? normalized[0] ?? null;
+  }
+
   private anonymizeIp(ip?: string | null) {
     if (!ip) return null;
 
@@ -37,12 +125,7 @@ export class AnalyticsService {
   }
 
   async recordEvent(dto: CreateAnalyticsEventDto, req: Request) {
-    const forwarded = req.headers['x-forwarded-for'];
-    const forwardedIp = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0]?.trim();
-
-    const rawIpAddress = forwardedIp || req.ip || null;
+    const rawIpAddress = this.extractClientIp(req);
     const anonymize = this.config.get('ANALYTICS_IP_ANONYMIZE', 'true') !== 'false';
     const ipAddress = anonymize ? this.anonymizeIp(rawIpAddress) : rawIpAddress;
     const userAgent = req.headers['user-agent']?.slice(0, 500) || null;
