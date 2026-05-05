@@ -124,6 +124,19 @@ export class AdminService {
     const pageViews = events.filter((e) => e.eventType === 'PAGE_VIEW').length;
     const clicks = events.filter((e) => e.eventType === 'CLICK').length;
     const formSubmits = events.filter((e) => e.eventType === 'FORM_SUBMIT').length;
+    const supportAnswered = events.filter(
+      (e) => e.eventType === 'CUSTOM' && e.label === 'support_chat_answered',
+    ).length;
+    const supportUnanswered = events.filter(
+      (e) => e.eventType === 'CUSTOM' && e.label === 'support_chat_unanswered',
+    ).length;
+    const supportContactClicks = events.filter(
+      (e) => e.eventType === 'CUSTOM' && e.label === 'support_chat_contact_support_click',
+    ).length;
+    const supportQuestions = supportAnswered + supportUnanswered;
+    const supportAnswerRatePct = supportQuestions > 0
+      ? Math.round((supportAnswered / supportQuestions) * 100)
+      : 0;
 
     const uniqueVisitors = new Set(events.map((e) => e.visitorId).filter(Boolean)).size;
     const uniqueSessions = new Set(events.map((e) => e.sessionId).filter(Boolean)).size;
@@ -359,6 +372,13 @@ export class AdminService {
         uniqueVisitors,
         uniqueSessions,
         avgSessionDurationSec,
+      },
+      supportBot: {
+        answered: supportAnswered,
+        unanswered: supportUnanswered,
+        contactClicks: supportContactClicks,
+        questions: supportQuestions,
+        answerRatePct: supportAnswerRatePct,
       },
       topPages,
       topClicks,

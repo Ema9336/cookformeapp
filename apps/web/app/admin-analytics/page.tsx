@@ -281,6 +281,13 @@ type AnalyticsSummary = {
     uniqueSessions: number;
     avgSessionDurationSec: number;
   };
+  supportBot: {
+    answered: number;
+    unanswered: number;
+    contactClicks: number;
+    questions: number;
+    answerRatePct: number;
+  };
   topPages: { path: string; count: number }[];
   topClicks: { label: string; count: number }[];
   topCountries: { country: string; count: number }[];
@@ -679,6 +686,35 @@ export default function AdminAnalyticsPage() {
           <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
             <p className="text-2xl font-bold">{formatDuration(summary?.totals.avgSessionDurationSec ?? 0)}</p>
             <p className="text-xs text-gray-500">Avg Session Duration</p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold">Support Bot Performance</h2>
+            <span className="text-xs text-gray-500">CUSTOM events</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">{summary?.supportBot.answered ?? 0}</p>
+              <p className="text-xs text-gray-500">Answered</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+              <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{summary?.supportBot.unanswered ?? 0}</p>
+              <p className="text-xs text-gray-500">Unanswered</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+              <p className="text-xl font-bold">{summary?.supportBot.questions ?? 0}</p>
+              <p className="text-xs text-gray-500">Questions</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{summary?.supportBot.answerRatePct ?? 0}%</p>
+              <p className="text-xs text-gray-500">Answer Rate</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+              <p className="text-xl font-bold text-rose-600 dark:text-rose-400">{summary?.supportBot.contactClicks ?? 0}</p>
+              <p className="text-xs text-gray-500">Contact Clicks</p>
+            </div>
           </div>
         </div>
 

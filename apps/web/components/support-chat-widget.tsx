@@ -62,6 +62,17 @@ export default function SupportChatWidget() {
     askQuestion(question);
   };
 
+  const onContactSupportClick = () => {
+    trackAnalyticsEvent({
+      eventType: "CUSTOM",
+      label: "support_chat_contact_support_click",
+      metadata: {
+        hasName: Boolean(contactName.trim()),
+        hasEmail: Boolean(contactEmail.trim()),
+      },
+    });
+  };
+
   const contactHref = `mailto:support@cookforme.com?subject=${encodeURIComponent("Cook For Me Support Request")}&body=${encodeURIComponent(
     `Name: ${contactName || ""}\nEmail: ${contactEmail || ""}\n\nIssue details:\n`
   )}`;
@@ -140,6 +151,7 @@ export default function SupportChatWidget() {
                 </div>
                 <a
                   href={contactHref}
+                  onClick={onContactSupportClick}
                   className="inline-block text-xs px-3 py-2 rounded bg-amber-600 text-white font-semibold hover:bg-amber-700"
                 >
                   Contact Support
