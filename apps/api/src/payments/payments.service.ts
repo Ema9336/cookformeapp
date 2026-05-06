@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import { BookingStatus } from '@prisma/client';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 
@@ -7,7 +9,10 @@ import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 export class PaymentsService {
   private stripeClient: InstanceType<typeof Stripe> | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   private isEnabled(flag: string, defaultValue = false) {
     const value = this.config.get<string>(flag);
@@ -86,5 +91,43 @@ export class PaymentsService {
       clientSecret: intent.client_secret,
       status: intent.status,
     };
+  }
+
+  async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
+    const webhookSecret = this.config.get<string>('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      throw new ServiceUnavailableException('Stripe webhook secret is not configured.');
+    }
+
+    const stripe = this.getStripeClient();
+    let event: ReturnType<typeof stripe.webhooks.constructEvent>;
+
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    } catch {
+      throw new BadRequestException('Invalid Stripe webhook signature.');
+    }
+
+    switch (event.type) {
+      case 'payment_intent.succeeded': {
+        const intentId = (event.data.object as { id: string }).id;
+        await this.prisma.booking.updateMany({
+          where: { paymentIntentId: intentId },
+          data: { status: BookingStatus.ACCEPTED },
+        });
+        break;
+      }
+      case 'payment_intent.payment_failed': {
+        const intentId = (event.data.object as { id: string }).id;
+        await this.prisma.booking.updateMany({
+          where: { paymentIntentId: intentId },
+          data: { status: BookingStatus.DECLINED },
+        });
+        break;
+      }
+      default:
+        // Unhandled event type — no-op
+        break;
+    }
   }
 }

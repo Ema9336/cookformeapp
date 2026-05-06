@@ -56,6 +56,7 @@ model Chef {
   responseTime String?
   licensed     Boolean  @default(false)
   distance     String?
+  isBookable   Boolean  @default(false)
   complianceStatus ComplianceStatus @default(PENDING)
   adminNotes   String?
   createdAt    DateTime @default(now())
@@ -89,10 +90,11 @@ model Booking {
   address     String?
   notes       String?
   allergies   String?
-  status      BookingStatus @default(PENDING)
-  totalAmount String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status            BookingStatus @default(PENDING)
+  totalAmount       String?
+  paymentIntentId   String?       @unique
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 }
 
 model AdminAuditLog {

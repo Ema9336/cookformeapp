@@ -26,6 +26,9 @@ export class BookingsService {
       include: { user: true },
     });
     if (!chef) throw new NotFoundException('Chef not found');
+    if (!chef.isBookable) {
+      throw new ServiceUnavailableException('This chef is not accepting bookings yet.');
+    }
 
     const customer = await this.prisma.user.findUnique({ where: { id: customerId } });
 

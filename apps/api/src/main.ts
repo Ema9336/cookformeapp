@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Needed behind Railway/Reverse proxies so req.ip and forwarded headers resolve correctly.
   app.getHttpAdapter().getInstance().set('trust proxy', true);
