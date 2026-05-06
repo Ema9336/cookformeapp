@@ -130,13 +130,16 @@ function CheckoutContent() {
     chefSlug: string,
     patch: Partial<ChefBookingDetail>,
   ) => {
+    const defaultDetail: ChefBookingDetail = {
+      serviceType: DEFAULT_SERVICE_TYPE,
+      date: "",
+      address: "",
+    };
+
     setBookingDetailsByChef((prev) => ({
       ...prev,
       [chefSlug]: {
-        serviceType: DEFAULT_SERVICE_TYPE,
-        date: "",
-        address: "",
-        ...prev[chefSlug],
+        ...(prev[chefSlug] ?? defaultDetail),
         ...patch,
       },
     }));
