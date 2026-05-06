@@ -9,6 +9,7 @@ import { useUserLocation } from "../../../hooks/useUserLocation";
 import { useChefLocations } from "../../../hooks/useChefLocations";
 import { calcDistanceMiles } from "../../../utils/calcDistance";
 import { paymentsApi, type PaymentStatus } from "../../../lib/api";
+import { addToCart as addCartItem, getCartTotalQty } from "../../../lib/cart";
 
 function MenuSection({
   title,
@@ -53,7 +54,7 @@ export default function ChefDetailPage() {
   const dynamicChefs = useChefLocations(userLocation);
   const [favorited, setFavorited] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
-  const [cart, setCart] = useState<{ item: MenuItem; qty: number }[]>([]);
+  const [cartTotal, setCartTotal] = useState(() => getCartTotalQty());
   const [drawerItem, setDrawerItem] = useState<MenuItem | null>(null);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
@@ -118,20 +119,18 @@ export default function ChefDetailPage() {
   const chef = { ...baseChef, location, city, distance };
 
   const addToCart = (item: MenuItem) => {
-    setCart((prev) => {
-      const existing = prev.find((c) => c.item.name === item.name);
-      if (existing) return prev.map((c) => c.item.name === item.name ? { ...c, qty: c.qty + 1 } : c);
-      return [...prev, { item, qty: 1 }];
+    addCartItem({
+      chefSlug: chef.slug,
+      chefName: chef.name,
+      itemName: item.name,
+      price: item.price,
+      qty: 1,
     });
+    setCartTotal(getCartTotalQty());
   };
 
-  const cartTotal = cart.reduce((sum, c) => sum + c.qty, 0);
-
   const checkoutHref = () => {
-    const cartData = cart.map((c) => ({ name: c.item.name, qty: c.qty, price: c.item.price }));
-    const qs = new URLSearchParams({ chef: chef.slug });
-    if (cartData.length > 0) qs.set("cart", encodeURIComponent(JSON.stringify(cartData)));
-    return `/checkout?${qs.toString()}`;
+    return "/checkout";
   };
 
   const bookingsEnabled = paymentStatus?.bookingsEnabled ?? false;

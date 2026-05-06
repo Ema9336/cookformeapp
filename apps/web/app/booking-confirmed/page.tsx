@@ -13,6 +13,7 @@ function BookingConfirmedContent() {
   const date = searchParams.get("date") || "";
   const service = searchParams.get("service") || "delivery";
   const guests = searchParams.get("guests") || "2";
+  const bookingCount = Number(searchParams.get("bookingCount") || "1");
   const [fallbackId] = useState(() => "CFM-" + Math.random().toString(36).slice(2, 8).toUpperCase());
   const bookingId = searchParams.get("id") || fallbackId;
 
@@ -58,10 +59,16 @@ function BookingConfirmedContent() {
             <span className="absolute -bottom-1 -right-1 bg-green-500 text-white text-sm w-8 h-8 rounded-full flex items-center justify-center font-bold shadow">✓</span>
           </div>
           <h1 className="text-3xl font-bold">Booking Request Sent!</h1>
-          <p className="text-gray-500 dark:text-gray-400 max-w-xs">
-            {chef.name} will confirm your booking within{" "}
-            {chef.responseTime.replace("Responds ", "").replace("Responds", "")}.
-          </p>
+          {bookingCount > 1 ? (
+            <p className="text-gray-500 dark:text-gray-400 max-w-xs">
+              {bookingCount} booking requests were sent to your selected chefs.
+            </p>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 max-w-xs">
+              {chef.name} will confirm your booking within{" "}
+              {chef.responseTime.replace("Responds ", "").replace("Responds", "")}.
+            </p>
+          )}
         </div>
 
         {/* Booking ID */}

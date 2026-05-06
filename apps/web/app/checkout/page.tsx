@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 import { useAuth } from "../../hooks/useAuth";
 import { bookingsApi, paymentsApi, type PaymentStatus } from "../../lib/api";
+import { addToCart as addCartItem, clearCart, getCartItems, type CartItem } from "../../lib/cart";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 
 function parsePriceToNumber(value?: string) {
@@ -30,8 +31,8 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { accessToken } = useAuth();
-  const slug = searchParams.get("chef") || "coastal-prep-kitchen";
-  const baseChef = mockChefs.find((c) => c.slug === slug) || mockChefs[0];
+  const legacySlug = searchParams.get("chef") || "";
+  const legacyCartParam = searchParams.get("cart");
 
   const [serviceType, setServiceType] = useState("delivery");
   const [guestCount, setGuestCount] = useState(2);
@@ -44,6 +45,7 @@ function CheckoutContent() {
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [paymentStatusLoading, setPaymentStatusLoading] = useState(true);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cardholderName, setCardholderName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -51,14 +53,59 @@ function CheckoutContent() {
   const [previewComplete, setPreviewComplete] = useState(false);
 
   useEffect(() => {
+    const existing = getCartItems();
+
+    // Backward compatibility with legacy URL-based cart params.
+    if (legacyCartParam && legacySlug && existing.length === 0) {
+      try {
+        const legacyItems = JSON.parse(decodeURIComponent(legacyCartParam)) as Array<{ name: string; qty: number; price?: string }>;
+        const legacyChef = mockChefs.find((c) => c.slug === legacySlug);
+
+        legacyItems.forEach((item) => {
+          if (!item?.name || !item?.qty) return;
+          addCartItem({
+            chefSlug: legacySlug,
+            chefName: legacyChef?.name ?? legacySlug,
+            itemName: item.name,
+            price: item.price,
+            qty: item.qty,
+          });
+        });
+      } catch {
+        // Ignore malformed legacy cart.
+      }
+    }
+
+    setCartItems(getCartItems());
+  }, [legacyCartParam, legacySlug]);
+
+  const groups = Array.from(
+    cartItems.reduce((map, item) => {
+      const current = map.get(item.chefSlug) ?? {
+        chefSlug: item.chefSlug,
+        chefName: item.chefName,
+        items: [] as CartItem[],
+      };
+      current.items.push(item);
+      map.set(item.chefSlug, current);
+      return map;
+    }, new Map<string, { chefSlug: string; chefName: string; items: CartItem[] }>()).values()
+  );
+
+  const primaryChefSlug = groups[0]?.chefSlug || legacySlug || "coastal-prep-kitchen";
+  const baseChef = mockChefs.find((c) => c.slug === primaryChefSlug) || mockChefs[0];
+  const chefKey = groups.map((g) => g.chefSlug).join(",");
+
+  useEffect(() => {
     trackAnalyticsEvent({
       eventType: "CUSTOM",
       label: "checkout_view",
       metadata: {
-        chefSlug: baseChef.slug,
+        chefs: chefKey ? chefKey.split(",") : [],
+        chefCount: groups.length,
       },
     });
-  }, [baseChef.slug]);
+  }, [chefKey, groups.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,12 +140,6 @@ function CheckoutContent() {
     };
   }, []);
 
-  // Parse cart from URL
-  const cartParam = searchParams.get("cart");
-  const cartItems: { name: string; qty: number; price?: string }[] = cartParam
-    ? JSON.parse(decodeURIComponent(cartParam))
-    : [];
-
   const subtotal = cartItems.reduce((sum, item) => sum + parsePriceToNumber(item.price) * item.qty, 0);
   const estimatedFees = subtotal > 0 ? Math.round(subtotal * 0.08 * 100) / 100 : 0;
   const estimatedTotal = subtotal + estimatedFees;
@@ -111,6 +152,11 @@ function CheckoutContent() {
 
   const handleSubmit = async () => {
     if (!agreed || !date) return;
+    if (groups.length === 0) {
+      setError("Your cart is empty. Add items from one or more chefs first.");
+      return;
+    }
+
     if (!paymentStatus?.bookingsEnabled) {
       if (!previewCardComplete) {
         setError("Enter sample card details to preview the final checkout step.");
@@ -123,7 +169,8 @@ function CheckoutContent() {
         eventType: "CUSTOM",
         label: "checkout_preview_payment_review",
         metadata: {
-          chefSlug: baseChef.slug,
+          chefs: groups.map((g) => g.chefSlug),
+          chefCount: groups.length,
           serviceType,
           guestCount,
           total: estimatedTotal,
@@ -131,37 +178,51 @@ function CheckoutContent() {
       });
       return;
     }
+
     if (!accessToken) {
       router.push(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
+
     setSubmitting(true);
     setError(null);
     try {
-      const booking = await bookingsApi.create(accessToken, {
-        chefSlug: baseChef.slug,
-        date,
-        serviceType,
-        guestCount,
-        address,
-        notes,
-        allergies,
-      });
+      const bookings = await Promise.all(
+        groups.map((group) =>
+          bookingsApi.create(accessToken, {
+            chefSlug: group.chefSlug,
+            date,
+            serviceType,
+            guestCount,
+            address,
+            notes,
+            allergies,
+            cart: group.items.map((item) => ({ name: item.itemName, qty: item.qty, price: item.price })),
+          })
+        )
+      );
+
+      clearCart();
+      setCartItems([]);
+
       trackAnalyticsEvent({
         eventType: "FORM_SUBMIT",
         label: "booking_submit_success",
         metadata: {
-          chefSlug: baseChef.slug,
+          chefs: groups.map((g) => g.chefSlug),
+          bookingCount: bookings.length,
           serviceType,
           guestCount,
         },
       });
+
       const qs = new URLSearchParams({
-        chef: baseChef.slug,
+        chef: groups[0].chefSlug,
         date,
         service: serviceType,
         guests: String(guestCount),
-        id: String(booking.id),
+        id: String(bookings[0].id),
+        bookingCount: String(bookings.length),
       });
       router.push(`/booking-confirmed?${qs.toString()}`);
     } catch (err) {
@@ -175,50 +236,66 @@ function CheckoutContent() {
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-36">
       <div className="max-w-3xl mx-auto">
 
-        {/* Back nav */}
         <div className="px-6 pt-6">
-          <Link href={`/chef/${baseChef.slug}`} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-            ← Back to {baseChef.name}
-          </Link>
+          {groups.length <= 1 ? (
+            <Link href={`/chef/${baseChef.slug}`} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              ← Back to {baseChef.name}
+            </Link>
+          ) : (
+            <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              ← Back to chefs
+            </Link>
+          )}
         </div>
 
         <div className="p-6 space-y-7">
           <h1 className="text-3xl font-bold">Booking Request</h1>
 
-          {/* Chef Summary Card */}
           <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 flex gap-4 items-center">
             <div className="relative h-20 w-20 overflow-hidden rounded-2xl shrink-0">
               <Image src={baseChef.image} alt={baseChef.name} fill className="object-cover" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold">{baseChef.name}</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">{baseChef.city} • {baseChef.distance}</p>
-              <p className="text-sm mt-1">⭐ {baseChef.rating} ({baseChef.reviews} reviews)</p>
-              {baseChef.tags?.slice(0, 2).map((t) => (
-                <span key={t} className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 mr-1 mt-1">{t}</span>
-              ))}
+              {groups.length <= 1 ? (
+                <>
+                  <h2 className="text-xl font-bold">{baseChef.name}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{baseChef.city} • {baseChef.distance}</p>
+                  <p className="text-sm mt-1">⭐ {baseChef.rating} ({baseChef.reviews} reviews)</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold">Multi-Chef Order</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{groups.length} chefs in this cart</p>
+                  <p className="text-sm mt-1">One checkout submits separate booking requests per chef.</p>
+                </>
+              )}
             </div>
             <div className="text-right">
               <p className="text-xs text-green-600 font-semibold bg-green-50 dark:bg-green-950 px-2 py-1 rounded-full">✅ Licensed</p>
             </div>
           </div>
 
-          {/* Selected items */}
           {cartItems.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-xl font-semibold">Your Order</h2>
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
-                {cartItems.map((item) => (
-                  <div key={item.name} className="flex justify-between items-center px-4 py-3">
-                    <span className="font-medium">{item.qty}× {item.name}</span>
-                    {item.price && <span className="text-green-600 font-semibold text-sm">{item.price}</span>}
+              <div className="space-y-3">
+                {groups.map((group) => (
+                  <div key={group.chefSlug} className="rounded-3xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-900 text-sm font-semibold">
+                      {group.chefName}
+                    </div>
+                    {group.items.map((item) => (
+                      <div key={`${group.chefSlug}-${item.itemName}`} className="flex justify-between items-center px-4 py-3">
+                        <span className="font-medium">{item.qty}× {item.itemName}</span>
+                        {item.price && <span className="text-green-600 font-semibold text-sm">{item.price}</span>}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* Booking Details */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Booking Details</h2>
 
@@ -287,7 +364,6 @@ function CheckoutContent() {
             )}
           </section>
 
-          {/* Allergies + Notes */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Dietary & Special Requests</h2>
 
@@ -314,7 +390,6 @@ function CheckoutContent() {
             </div>
           </section>
 
-          {/* Food Safety Notice */}
           <section className="rounded-3xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-5 space-y-2">
             <h3 className="font-semibold text-base">⚠️ Food Safety Notice</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -349,11 +424,6 @@ function CheckoutContent() {
                   ? "Checking whether bookings and payments are currently enabled."
                   : paymentStatus?.message}
               </p>
-              {paymentStatus?.mode === "test" && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Stripe is wired in test mode. Real card charges are not live yet.
-                </p>
-              )}
             </div>
           </section>
 
@@ -424,6 +494,10 @@ function CheckoutContent() {
 
               <div className="rounded-2xl bg-gray-50 dark:bg-zinc-900 p-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Chefs</span>
+                  <span>{groups.length || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
                   <span>{subtotal > 0 ? `$${subtotal.toFixed(2)}` : "Calculated at payment"}</span>
                 </div>
@@ -438,7 +512,6 @@ function CheckoutContent() {
               </div>
             </div>
           </section>
-
         </div>
       </div>
 
@@ -461,8 +534,8 @@ function CheckoutContent() {
 
             <div className="rounded-2xl bg-gray-50 dark:bg-zinc-950 p-4 text-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Chef</span>
-                <span className="font-medium">{baseChef.name}</span>
+                <span className="text-gray-500 dark:text-gray-400">Chefs</span>
+                <span className="font-medium">{groups.length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Service</span>
@@ -496,7 +569,6 @@ function CheckoutContent() {
         </div>
       )}
 
-      {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto">
           {error && (
@@ -513,7 +585,9 @@ function CheckoutContent() {
                 ? "Preview Final Payment Step"
                 : submitting
                   ? "Submitting…"
-                  : "Submit Booking Request"}
+                  : groups.length > 1
+                    ? `Submit ${groups.length} Booking Requests`
+                    : "Submit Booking Request"}
           </button>
           {(!agreed || !date) && (
             <p className="text-center text-xs text-gray-400 mt-2">
