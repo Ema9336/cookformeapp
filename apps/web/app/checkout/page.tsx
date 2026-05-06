@@ -9,6 +9,23 @@ import { useAuth } from "../../hooks/useAuth";
 import { bookingsApi, paymentsApi, type PaymentStatus } from "../../lib/api";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 
+function parsePriceToNumber(value?: string) {
+  if (!value) return 0;
+  const numeric = Number.parseFloat(value.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function formatCardNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 16);
+  return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+
+function formatExpiry(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -27,6 +44,11 @@ function CheckoutContent() {
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [paymentStatusLoading, setPaymentStatusLoading] = useState(true);
+  const [cardholderName, setCardholderName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+  const [previewComplete, setPreviewComplete] = useState(false);
 
   useEffect(() => {
     trackAnalyticsEvent({
@@ -77,10 +99,36 @@ function CheckoutContent() {
     ? JSON.parse(decodeURIComponent(cartParam))
     : [];
 
+  const subtotal = cartItems.reduce((sum, item) => sum + parsePriceToNumber(item.price) * item.qty, 0);
+  const estimatedFees = subtotal > 0 ? Math.round(subtotal * 0.08 * 100) / 100 : 0;
+  const estimatedTotal = subtotal + estimatedFees;
+
+  const previewCardComplete =
+    cardholderName.trim().length >= 2 &&
+    cardNumber.replace(/\D/g, "").length >= 16 &&
+    cardExpiry.replace(/\D/g, "").length === 4 &&
+    cardCvc.replace(/\D/g, "").length >= 3;
+
   const handleSubmit = async () => {
     if (!agreed || !date) return;
     if (!paymentStatus?.bookingsEnabled) {
-      setError(paymentStatus?.message || "Bookings are not open yet.");
+      if (!previewCardComplete) {
+        setError("Enter sample card details to preview the final checkout step.");
+        return;
+      }
+
+      setError(null);
+      setPreviewComplete(true);
+      trackAnalyticsEvent({
+        eventType: "CUSTOM",
+        label: "checkout_preview_payment_review",
+        metadata: {
+          chefSlug: baseChef.slug,
+          serviceType,
+          guestCount,
+          total: estimatedTotal,
+        },
+      });
       return;
     }
     if (!accessToken) {
@@ -309,8 +357,144 @@ function CheckoutContent() {
             </div>
           </section>
 
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold">Payment Details</h2>
+              {!paymentStatus?.bookingsEnabled && (
+                <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-semibold">
+                  Preview Only
+                </span>
+              )}
+            </div>
+
+            {!paymentStatus?.bookingsEnabled && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Use sample values only. This preview does not send or process any payment information.
+              </p>
+            )}
+
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Cardholder name</label>
+                <input
+                  type="text"
+                  value={cardholderName}
+                  onChange={(e) => setCardholderName(e.target.value)}
+                  placeholder="Name on card"
+                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Card number</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Expiry</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cardExpiry}
+                    onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                    placeholder="12/34"
+                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">CVC</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cardCvc}
+                    onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    placeholder="123"
+                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-gray-50 dark:bg-zinc-900 p-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                  <span>{subtotal > 0 ? `$${subtotal.toFixed(2)}` : "Calculated at payment"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Estimated service fee</span>
+                  <span>{subtotal > 0 ? `$${estimatedFees.toFixed(2)}` : "TBD"}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold text-base pt-1 border-t border-gray-200 dark:border-gray-800">
+                  <span>Estimated total</span>
+                  <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Shown when items have prices"}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
         </div>
       </div>
+
+      {previewComplete && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewComplete(false)} />
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-green-600">Preview Complete</p>
+                <h2 className="text-2xl font-bold">Final payment step preview</h2>
+              </div>
+              <button
+                onClick={() => setPreviewComplete(false)}
+                className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 dark:bg-zinc-950 p-4 text-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Chef</span>
+                <span className="font-medium">{baseChef.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Service</span>
+                <span className="font-medium capitalize">{serviceType}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Date</span>
+                <span className="font-medium">{date || "Not selected"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Card</span>
+                <span className="font-medium">•••• {cardNumber.replace(/\D/g, "").slice(-4) || "4242"}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-2 font-semibold">
+                <span>Total</span>
+                <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Calculated at payment"}</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200">
+              This is a preview only. No payment was processed, no booking was submitted, and no card data was sent to Stripe.
+            </div>
+
+            <button
+              onClick={() => setPreviewComplete(false)}
+              className="w-full rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg"
+            >
+              Back to Checkout Preview
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
@@ -320,13 +504,13 @@ function CheckoutContent() {
           )}
           <button
             onClick={handleSubmit}
-            disabled={!agreed || !date || submitting || paymentStatusLoading || !paymentStatus?.bookingsEnabled}
+            disabled={!agreed || !date || submitting || paymentStatusLoading || (!paymentStatus?.bookingsEnabled && !previewCardComplete)}
             className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
             {paymentStatusLoading
               ? "Checking availability…"
               : !paymentStatus?.bookingsEnabled
-                ? "Bookings Not Open Yet"
+                ? "Preview Final Payment Step"
                 : submitting
                   ? "Submitting…"
                   : "Submit Booking Request"}
@@ -334,6 +518,11 @@ function CheckoutContent() {
           {(!agreed || !date) && (
             <p className="text-center text-xs text-gray-400 mt-2">
               {!date ? "Select a date" : "Agree to food safety notice"} to continue
+            </p>
+          )}
+          {paymentStatus && !paymentStatus.bookingsEnabled && agreed && date && !previewCardComplete && (
+            <p className="text-center text-xs text-gray-400 mt-2">
+              Enter sample card details to preview the final payment step.
             </p>
           )}
         </div>
