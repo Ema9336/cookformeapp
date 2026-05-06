@@ -231,6 +231,12 @@ function CheckoutContent() {
     });
   };
 
+  const handleClearCart = () => {
+    clearCart();
+    setCartItems([]);
+    setError(null);
+  };
+
   const handleSubmit = async () => {
     if (!agreed) return;
     if (groups.length === 0) {
@@ -370,7 +376,15 @@ function CheckoutContent() {
 
           {cartItems.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold">Your Order</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold">Your Order</h2>
+                <button
+                  onClick={handleClearCart}
+                  className="text-xs font-semibold text-red-500 border border-red-200 dark:border-red-800 px-2.5 py-1 rounded-lg"
+                >
+                  Clear cart
+                </button>
+              </div>
               <div className="space-y-3">
                 {groups.map((group) => (
                   <div key={group.chefSlug} className="rounded-3xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
