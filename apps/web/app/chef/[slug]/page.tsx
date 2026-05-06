@@ -8,6 +8,7 @@ import { mockChefs, MenuItem } from "../../../lib/mockChefs";
 import { useUserLocation } from "../../../hooks/useUserLocation";
 import { useChefLocations } from "../../../hooks/useChefLocations";
 import { calcDistanceMiles } from "../../../utils/calcDistance";
+import { paymentsApi, type PaymentStatus } from "../../../lib/api";
 
 function MenuSection({
   title,
@@ -57,6 +58,7 @@ export default function ChefDetailPage() {
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [messageSent, setMessageSent] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,6 +69,32 @@ export default function ChefDetailPage() {
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPaymentStatus = async () => {
+      try {
+        const status = await paymentsApi.status();
+        if (!cancelled) setPaymentStatus(status);
+      } catch {
+        if (!cancelled) {
+          setPaymentStatus({
+            stripeEnabled: false,
+            bookingsEnabled: false,
+            mode: "disabled",
+            publishableKeyPresent: false,
+            message: "Bookings are currently disabled while the marketplace is in preview mode.",
+          });
+        }
+      }
+    };
+
+    void loadPaymentStatus();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const baseChef = mockChefs.find((c) => c.slug === params.slug);
@@ -106,6 +134,8 @@ export default function ChefDetailPage() {
     return `/checkout?${qs.toString()}`;
   };
 
+  const bookingsEnabled = paymentStatus?.bookingsEnabled ?? false;
+
   return (
     <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
 
@@ -118,7 +148,13 @@ export default function ChefDetailPage() {
       {/* Sticky Header on scroll */}
       <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
         <span className="font-semibold text-lg truncate">{chef.name}</span>
-        <Link href={checkoutHref()} className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold shrink-0 ml-4">Book Now</Link>
+        {bookingsEnabled ? (
+          <Link href={checkoutHref()} className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold shrink-0 ml-4">Book Now</Link>
+        ) : (
+          <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-4 py-2 rounded-full text-sm font-semibold shrink-0 ml-4">
+            Preview Only
+          </span>
+        )}
       </div>
 
       <div className="max-w-3xl mx-auto pb-36">
@@ -182,6 +218,11 @@ export default function ChefDetailPage() {
                 </div>
               ))}
             </div>
+            {!bookingsEnabled && (
+              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+                Bookings are currently disabled while the marketplace is in preview mode.
+              </p>
+            )}
           </section>
 
           <MenuSection title="Popular Meals" items={chef.menu.meals} onAdd={addToCart} onViewDetail={setDrawerItem} />
@@ -273,14 +314,20 @@ export default function ChefDetailPage() {
       {/* Sticky bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
         <div className="max-w-3xl mx-auto flex gap-3">
-          <Link href={checkoutHref()} className="flex-1 rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg relative flex items-center justify-center">
-            Book Now
-            {cartTotal > 0 && (
-              <span className="absolute -top-2 -right-2 bg-black dark:bg-white text-white dark:text-black text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                {cartTotal}
-              </span>
-            )}
-          </Link>
+          {bookingsEnabled ? (
+            <Link href={checkoutHref()} className="flex-1 rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg relative flex items-center justify-center">
+              Book Now
+              {cartTotal > 0 && (
+                <span className="absolute -top-2 -right-2 bg-black dark:bg-white text-white dark:text-black text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+                  {cartTotal}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <div className="flex-1 rounded-2xl bg-gray-200 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 py-4 font-semibold text-lg relative flex items-center justify-center">
+              Preview Only
+            </div>
+          )}
           <button
             onClick={() => { setMessageOpen(true); setMessageSent(false); setMessageText(""); }}
             className="rounded-2xl border border-gray-300 dark:border-gray-700 px-6 py-4 font-semibold"

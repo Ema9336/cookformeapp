@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../notifications/email.service';
 import { InAppNotificationsService } from '../notifications/in-app-notifications.service';
@@ -11,9 +12,15 @@ export class BookingsService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private inAppNotifications: InAppNotificationsService,
+    private config: ConfigService,
   ) {}
 
   async create(customerId: string, dto: CreateBookingDto) {
+    const bookingsEnabled = this.config.get<string>('BOOKINGS_ENABLED', 'false') === 'true';
+    if (!bookingsEnabled) {
+      throw new ServiceUnavailableException('Bookings are not open yet. The marketplace is currently in preview mode.');
+    }
+
     const chef = await this.prisma.chef.findUnique({ 
       where: { slug: dto.chefSlug },
       include: { user: true },

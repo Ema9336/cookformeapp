@@ -18,6 +18,14 @@ export type AnalyticsEventPayload = {
   referrer?: string;
 };
 
+export type PaymentStatus = {
+  stripeEnabled: boolean;
+  bookingsEnabled: boolean;
+  mode: 'disabled' | 'test' | 'live';
+  publishableKeyPresent: boolean;
+  message: string;
+};
+
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -117,6 +125,16 @@ export const bookingsApi = {
 export const analyticsApi = {
   trackEvent: (data: AnalyticsEventPayload) =>
     request<{ ok: boolean }>('/analytics/events', { method: 'POST', body: data }),
+};
+
+export const paymentsApi = {
+  status: () => request<PaymentStatus>('/payments/status'),
+  createIntent: (token: string, data: { amount: number; currency?: string; chefSlug?: string }) =>
+    request<{ id: string; clientSecret: string | null; status: string }>('/payments/intent', {
+      method: 'POST',
+      body: data,
+      token,
+    }),
 };
 
 // ─── Notifications ──────────────────────────────────────────────────────────

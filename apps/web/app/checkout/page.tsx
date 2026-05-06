@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 import { useAuth } from "../../hooks/useAuth";
-import { bookingsApi } from "../../lib/api";
+import { bookingsApi, paymentsApi, type PaymentStatus } from "../../lib/api";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 
 function CheckoutContent() {
@@ -25,6 +25,8 @@ function CheckoutContent() {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
+  const [paymentStatusLoading, setPaymentStatusLoading] = useState(true);
 
   useEffect(() => {
     trackAnalyticsEvent({
@@ -36,6 +38,39 @@ function CheckoutContent() {
     });
   }, [baseChef.slug]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPaymentStatus = async () => {
+      try {
+        const status = await paymentsApi.status();
+        if (!cancelled) {
+          setPaymentStatus(status);
+        }
+      } catch {
+        if (!cancelled) {
+          setPaymentStatus({
+            stripeEnabled: false,
+            bookingsEnabled: false,
+            mode: "disabled",
+            publishableKeyPresent: false,
+            message: "Payments are temporarily unavailable.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setPaymentStatusLoading(false);
+        }
+      }
+    };
+
+    void loadPaymentStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Parse cart from URL
   const cartParam = searchParams.get("cart");
   const cartItems: { name: string; qty: number; price?: string }[] = cartParam
@@ -44,6 +79,10 @@ function CheckoutContent() {
 
   const handleSubmit = async () => {
     if (!agreed || !date) return;
+    if (!paymentStatus?.bookingsEnabled) {
+      setError(paymentStatus?.message || "Bookings are not open yet.");
+      return;
+    }
     if (!accessToken) {
       router.push(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
@@ -244,6 +283,32 @@ function CheckoutContent() {
             </label>
           </section>
 
+          <section className="space-y-3">
+            <h2 className="text-xl font-semibold">Payment Status</h2>
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className={`px-2 py-1 rounded-full font-semibold ${paymentStatus?.mode === "test" ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
+                  {paymentStatusLoading ? "Checking…" : paymentStatus?.mode === "test" ? "Stripe Test Mode" : "Payments Disabled"}
+                </span>
+                {paymentStatus && (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {paymentStatus.bookingsEnabled ? "Bookings enabled" : "Bookings disabled"}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {paymentStatusLoading
+                  ? "Checking whether bookings and payments are currently enabled."
+                  : paymentStatus?.message}
+              </p>
+              {paymentStatus?.mode === "test" && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Stripe is wired in test mode. Real card charges are not live yet.
+                </p>
+              )}
+            </div>
+          </section>
+
         </div>
       </div>
 
@@ -255,10 +320,16 @@ function CheckoutContent() {
           )}
           <button
             onClick={handleSubmit}
-            disabled={!agreed || !date || submitting}
+            disabled={!agreed || !date || submitting || paymentStatusLoading || !paymentStatus?.bookingsEnabled}
             className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
-            {submitting ? "Submitting…" : "Submit Booking Request"}
+            {paymentStatusLoading
+              ? "Checking availability…"
+              : !paymentStatus?.bookingsEnabled
+                ? "Bookings Not Open Yet"
+                : submitting
+                  ? "Submitting…"
+                  : "Submit Booking Request"}
           </button>
           {(!agreed || !date) && (
             <p className="text-center text-xs text-gray-400 mt-2">
