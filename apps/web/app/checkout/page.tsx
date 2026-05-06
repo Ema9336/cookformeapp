@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { mockChefs } from "../../lib/mockChefs";
 import { useAuth } from "../../hooks/useAuth";
 import { bookingsApi, paymentsApi, type PaymentStatus } from "../../lib/api";
-import { addToCart as addCartItem, clearCart, getCartItems, type CartItem } from "../../lib/cart";
+import { addToCart as addCartItem, clearCart, getCartItems, setCartItems as persistCartItems, type CartItem } from "../../lib/cart";
 import { trackAnalyticsEvent } from "../../lib/analytics";
 
 function parsePriceToNumber(value?: string) {
@@ -209,6 +209,28 @@ function CheckoutContent() {
     cardExpiry.replace(/\D/g, "").length === 4 &&
     cardCvc.replace(/\D/g, "").length >= 3;
 
+  const changeItemQty = (chefSlug: string, itemName: string, delta: number) => {
+    setCartItems((prev) => {
+      const next = prev
+        .map((item) => {
+          if (item.chefSlug !== chefSlug || item.itemName !== itemName) return item;
+          return { ...item, qty: item.qty + delta };
+        })
+        .filter((item) => item.qty > 0);
+
+      persistCartItems(next);
+      return next;
+    });
+  };
+
+  const removeItem = (chefSlug: string, itemName: string) => {
+    setCartItems((prev) => {
+      const next = prev.filter((item) => !(item.chefSlug === chefSlug && item.itemName === itemName));
+      persistCartItems(next);
+      return next;
+    });
+  };
+
   const handleSubmit = async () => {
     if (!agreed) return;
     if (groups.length === 0) {
@@ -356,9 +378,33 @@ function CheckoutContent() {
                       {group.chefName}
                     </div>
                     {group.items.map((item) => (
-                      <div key={`${group.chefSlug}-${item.itemName}`} className="flex justify-between items-center px-4 py-3">
-                        <span className="font-medium">{item.qty}× {item.itemName}</span>
-                        {item.price && <span className="text-green-600 font-semibold text-sm">{item.price}</span>}
+                      <div key={`${group.chefSlug}-${item.itemName}`} className="flex justify-between items-center px-4 py-3 gap-3">
+                        <div className="min-w-0">
+                          <span className="font-medium">{item.qty}× {item.itemName}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.price && <span className="text-green-600 font-semibold text-sm mr-1">{item.price}</span>}
+                          <button
+                            onClick={() => changeItemQty(group.chefSlug, item.itemName, -1)}
+                            className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-700 text-sm font-bold"
+                            aria-label={`Decrease ${item.itemName}`}
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => changeItemQty(group.chefSlug, item.itemName, 1)}
+                            className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-700 text-sm font-bold"
+                            aria-label={`Increase ${item.itemName}`}
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => removeItem(group.chefSlug, item.itemName)}
+                            className="text-xs text-red-500 font-semibold px-2 py-1 rounded-md border border-red-200 dark:border-red-800"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
