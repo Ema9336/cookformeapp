@@ -118,6 +118,9 @@ export const bookingsApi = {
 
   updateStatus: (token: string, id: string, status: string) =>
     request(`/bookings/${id}/status`, { method: 'PATCH', body: { status }, token }),
+
+  submitReview: (token: string, id: string, data: { rating: number; review?: string }) =>
+    request(`/bookings/${id}/review`, { method: 'POST', body: data, token }),
 };
 
 // ─── Analytics ─────────────────────────────────────────────────────────────
@@ -230,4 +233,10 @@ export const adminApi = {
     id: string,
     data: { status: string; adminNotes?: string },
   ) => request(`/admin/chefs/${id}/compliance`, { method: 'PATCH', body: data, token }),
+
+  updateBookable: (
+    token: string,
+    id: string,
+    data: { isBookable: boolean },
+  ) => request(`/admin/chefs/${id}/bookable`, { method: 'PATCH', body: data, token }),
 };

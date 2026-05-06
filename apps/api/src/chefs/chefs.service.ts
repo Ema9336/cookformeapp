@@ -32,6 +32,18 @@ export class ChefsService {
       include: {
         user: { select: { name: true, email: true } },
         menuItems: true,
+        bookings: {
+          where: { reviewedAt: { not: null } },
+          orderBy: { reviewedAt: 'desc' },
+          take: 10,
+          select: {
+            id: true,
+            customerRating: true,
+            customerReview: true,
+            reviewedAt: true,
+            customer: { select: { name: true } },
+          },
+        },
       },
     });
     if (!chef) throw new NotFoundException('Chef not found');

@@ -934,6 +934,12 @@ export default function ChefOnboardingPage() {
         category: form.serviceCategory || form.cuisineType,
         tags: JSON.stringify(form.specialties),
         licensed: form.licensedKitchen,
+        deliveryRadiusMiles: Number(form.radiusMiles) || 15,
+        deliveryTowns: form.deliveryTowns,
+        offersInHome: form.offersInHome,
+        availableDays: JSON.stringify(form.availability.filter((a) => a.available).map((a) => a.day)),
+        leadTimeDays: Number(form.leadTimeDays) || 0,
+        maxBookingsPerDay: Number(form.maxBookingsPerDay) || 1,
         responseTime: "Usually responds in 2 hrs",
       });
 

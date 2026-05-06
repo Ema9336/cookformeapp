@@ -15,6 +15,9 @@ interface Booking {
   notes?: string;
   allergies?: string;
   totalAmount: number;
+  customerRating?: number | null;
+  customerReview?: string | null;
+  reviewedAt?: string | null;
   chef: {
     user: {
       name: string;
@@ -26,14 +29,14 @@ const statusColors: Record<string, string> = {
   PENDING: '#fbbf24',
   ACCEPTED: '#60a5fa',
   COMPLETED: '#34d399',
-  CANCELLED: '#ef5350',
+  DECLINED: '#ef5350',
 };
 
 const statusLabels: Record<string, string> = {
   PENDING: 'Pending',
   ACCEPTED: 'Accepted',
   COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  DECLINED: 'Declined',
 };
 
 export default function BookingsPage() {
@@ -43,6 +46,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filteredStatus, setFilteredStatus] = useState<string>('ALL');
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, { rating: number; review: string; saving: boolean; error: string }>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -69,6 +73,49 @@ export default function BookingsPage() {
   const filtered = filteredStatus === 'ALL' 
     ? bookings 
     : bookings.filter(b => b.status === filteredStatus);
+
+  const getDraft = (bookingId: string) =>
+    reviewDrafts[bookingId] ?? { rating: 5, review: '', saving: false, error: '' };
+
+  const setDraft = (bookingId: string, patch: Partial<{ rating: number; review: string; saving: boolean; error: string }>) => {
+    setReviewDrafts((prev) => ({
+      ...prev,
+      [bookingId]: {
+        ...getDraft(bookingId),
+        ...patch,
+      },
+    }));
+  };
+
+  const submitReview = async (bookingId: string) => {
+    if (!accessToken) return;
+    const draft = getDraft(bookingId);
+    setDraft(bookingId, { saving: true, error: '' });
+    try {
+      await bookingsApi.submitReview(accessToken, bookingId, {
+        rating: draft.rating,
+        review: draft.review.trim() || undefined,
+      });
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId
+            ? {
+                ...b,
+                customerRating: draft.rating,
+                customerReview: draft.review.trim() || null,
+                reviewedAt: new Date().toISOString(),
+              }
+            : b
+        )
+      );
+      setDraft(bookingId, { saving: false });
+    } catch (err) {
+      setDraft(bookingId, {
+        saving: false,
+        error: err instanceof Error ? err.message : 'Could not submit review.',
+      });
+    }
+  };
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading bookings...</div>;
@@ -102,7 +149,7 @@ export default function BookingsPage() {
       ) : (
         <>
           <div style={{ marginBottom: '2rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {['ALL', 'PENDING', 'ACCEPTED', 'COMPLETED', 'CANCELLED'].map(status => (
+            {['ALL', 'PENDING', 'ACCEPTED', 'COMPLETED', 'DECLINED'].map(status => (
               <button
                 key={status}
                 onClick={() => setFilteredStatus(status)}
@@ -190,6 +237,70 @@ export default function BookingsPage() {
                     <p style={{ margin: '0.25rem 0', color: '#dc2626', fontSize: '0.875rem', fontWeight: '500' }}>
                       Allergies: {booking.allergies}
                     </p>
+                  )}
+
+                  {booking.status === 'COMPLETED' && (
+                    <div style={{ marginTop: '1rem', borderTop: '1px dashed #e5e7eb', paddingTop: '1rem' }}>
+                      {booking.customerRating ? (
+                        <>
+                          <p style={{ margin: 0, fontWeight: 600 }}>Your review: {'⭐'.repeat(booking.customerRating)}</p>
+                          {booking.customerReview && (
+                            <p style={{ margin: '0.5rem 0 0 0', color: '#4b5563', fontSize: '0.875rem' }}>
+                              {booking.customerReview}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <p style={{ margin: 0, fontWeight: 600 }}>Rate this chef</p>
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+                            {[1, 2, 3, 4, 5].map((value) => (
+                              <button
+                                key={value}
+                                onClick={() => setDraft(booking.id, { rating: value })}
+                                style={{
+                                  border: '1px solid #d1d5db',
+                                  borderRadius: '0.375rem',
+                                  padding: '0.35rem 0.55rem',
+                                  backgroundColor: getDraft(booking.id).rating === value ? '#dcfce7' : 'white',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {value}★
+                              </button>
+                            ))}
+                          </div>
+                          <textarea
+                            value={getDraft(booking.id).review}
+                            onChange={(e) => setDraft(booking.id, { review: e.target.value })}
+                            placeholder="Optional: share your experience"
+                            rows={3}
+                            style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.6rem' }}
+                          />
+                          {getDraft(booking.id).error && (
+                            <p style={{ margin: '0.5rem 0 0 0', color: '#dc2626', fontSize: '0.8rem' }}>
+                              {getDraft(booking.id).error}
+                            </p>
+                          )}
+                          <button
+                            onClick={() => submitReview(booking.id)}
+                            disabled={getDraft(booking.id).saving}
+                            style={{
+                              marginTop: '0.75rem',
+                              padding: '0.5rem 0.9rem',
+                              backgroundColor: '#16a34a',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              opacity: getDraft(booking.id).saving ? 0.7 : 1,
+                            }}
+                          >
+                            {getDraft(booking.id).saving ? 'Submitting...' : 'Submit Review'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

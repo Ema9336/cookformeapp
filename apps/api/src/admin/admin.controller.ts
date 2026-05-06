@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UpdateComplianceDto } from './dto/update-compliance.dto';
+import { UpdateBookableDto } from './dto/update-bookable.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateUserRolesBulkDto } from './dto/update-user-roles-bulk.dto';
 
@@ -100,5 +101,14 @@ export class AdminController {
     @Body() dto: UpdateComplianceDto,
   ) {
     return this.adminService.updateCompliance(req.user.id, id, dto);
+  }
+
+  @Patch('chefs/:id/bookable')
+  updateBookable(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateBookableDto,
+  ) {
+    return this.adminService.updateBookable(req.user.id, id, dto);
   }
 }

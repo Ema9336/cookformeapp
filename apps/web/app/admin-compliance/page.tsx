@@ -18,6 +18,7 @@ type ChefApplication = {
   cuisineType: string;
   submittedAt: string;
   status: ComplianceStatus;
+  isBookable?: boolean;
   complianceScore: number;
   // Toggles
   licensedKitchen: boolean;
@@ -275,6 +276,7 @@ function apiChefToApplication(c: Record<string, unknown>): ChefApplication {
     cuisineType: tags[0] ?? "",
     submittedAt: (c.createdAt as string) ?? new Date().toISOString(),
     status: apiStatusToLocal((c.complianceStatus as string) ?? "PENDING"),
+    isBookable: Boolean(c.isBookable),
     complianceScore: score,
     licensedKitchen: licensed,
     kitchenType: licensed ? "licensed" : "",
@@ -301,15 +303,18 @@ function ApplicationDrawer({
   app,
   onClose,
   onStatusChange,
+  onBookableChange,
   accessToken,
 }: {
   app: ChefApplication;
   onClose: () => void;
   onStatusChange: (id: string, status: ComplianceStatus, notes: string) => void;
+  onBookableChange: (id: string, isBookable: boolean) => void;
   accessToken: string | null;
 }) {
   const [notes, setNotes] = useState(app.adminNotes);
   const [saving, setSaving] = useState(false);
+  const [bookableSaving, setBookableSaving] = useState(false);
   const [actionError, setActionError] = useState("");
 
   const handleAction = async (status: ComplianceStatus) => {
@@ -328,6 +333,21 @@ function ApplicationDrawer({
       setActionError(err instanceof Error ? err.message : "Action failed.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBookableToggle = async () => {
+    if (!accessToken) return;
+    setBookableSaving(true);
+    setActionError("");
+    try {
+      const next = !Boolean(app.isBookable);
+      await adminApi.updateBookable(accessToken, app.id, { isBookable: next });
+      onBookableChange(app.id, next);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not update bookable status.");
+    } finally {
+      setBookableSaving(false);
     }
   };
 
@@ -361,13 +381,27 @@ function ApplicationDrawer({
           <div>
             <p className="font-bold text-lg">{app.chefName}</p>
             <p className="text-sm text-gray-500">{app.city}, {app.state} · {app.serviceCategory}</p>
+            <p className="text-xs mt-1">
+              <span className={`px-2 py-0.5 rounded-full font-semibold ${app.isBookable ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
+                {app.isBookable ? "Bookable Live" : "Preview Only"}
+              </span>
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white transition"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBookableToggle}
+              disabled={bookableSaving}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition disabled:opacity-60 ${app.isBookable ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : "border-green-300 text-green-700 dark:border-green-800 dark:text-green-400"}`}
+            >
+              {bookableSaving ? "Saving..." : app.isBookable ? "Disable Booking" : "Enable Booking"}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-black dark:hover:text-white transition"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-6 flex-1">
@@ -518,6 +552,17 @@ export default function AdminCompliancePage() {
     );
   };
 
+  const handleBookableChange = (id: string, isBookable: boolean) => {
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? { ...a, isBookable }
+          : a
+      )
+    );
+    setSelected((prev) => (prev && prev.id === id ? { ...prev, isBookable } : prev));
+  };
+
   const counts = {
     all: applications.length,
     pending: applications.filter((a) => a.status === "pending").length,
@@ -641,6 +686,9 @@ export default function AdminCompliancePage() {
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="font-bold text-base group-hover:text-green-600 transition truncate">{app.chefName}</span>
                     {statusBadge(app.status)}
+                    <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${app.isBookable ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400" : "border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"}`}>
+                      {app.isBookable ? "Bookable" : "Preview"}
+                    </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
                     {app.city}, {app.state} · {app.serviceCategory} · {app.cuisineType}
@@ -696,6 +744,7 @@ export default function AdminCompliancePage() {
             handleStatusChange(id, status, notes);
             setSelected(null);
           }}
+          onBookableChange={handleBookableChange}
           accessToken={accessToken}
         />
       )}

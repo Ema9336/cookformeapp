@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateComplianceDto } from './dto/update-compliance.dto';
+import { UpdateBookableDto } from './dto/update-bookable.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UpdateUserRolesBulkDto } from './dto/update-user-roles-bulk.dto';
 
@@ -680,6 +681,29 @@ export class AdminService {
         fromStatus: chef.complianceStatus,
         toStatus: dto.status,
         notesIncluded: dto.adminNotes !== undefined,
+      },
+    });
+
+    return updated;
+  }
+
+  async updateBookable(actorId: string, id: string, dto: UpdateBookableDto) {
+    const chef = await this.prisma.chef.findUnique({ where: { id } });
+    if (!chef) throw new NotFoundException('Chef not found');
+
+    const updated = await this.prisma.chef.update({
+      where: { id },
+      data: { isBookable: dto.isBookable },
+    });
+
+    await this.logAction({
+      actorId,
+      action: 'CHEF_BOOKABLE_UPDATED',
+      targetType: 'CHEF',
+      targetId: id,
+      details: {
+        from: chef.isBookable,
+        to: dto.isBookable,
       },
     });
 

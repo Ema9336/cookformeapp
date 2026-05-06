@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { SubmitReviewDto } from './dto/submit-review.dto';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { BookingStatus } from '@prisma/client';
 
@@ -35,5 +36,15 @@ export class BookingsController {
     @Body('status') status: BookingStatus,
   ) {
     return this.bookingsService.updateStatus(req.user.id, id, status);
+  }
+
+  // Customer: submit rating/review after completion
+  @Post(':id/review')
+  submitReview(
+    @Request() req: any,
+    @Param('id') id: string,
+    @Body() dto: SubmitReviewDto,
+  ) {
+    return this.bookingsService.submitReview(req.user.id, id, dto);
   }
 }

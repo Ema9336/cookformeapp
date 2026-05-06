@@ -56,6 +56,13 @@ model Chef {
   responseTime String?
   licensed     Boolean  @default(false)
   distance     String?
+  deliveryRadiusMiles Int? @default(15)
+  deliveryTowns String?
+  offersInHome Boolean @default(false)
+  availableDays String? // JSON array of weekday short names, e.g. ["Mon","Tue"]
+  blockedDates String?  // JSON array of YYYY-MM-DD values
+  leadTimeDays Int? @default(2)
+  maxBookingsPerDay Int? @default(3)
   isBookable   Boolean  @default(false)
   complianceStatus ComplianceStatus @default(PENDING)
   adminNotes   String?
@@ -93,6 +100,9 @@ model Booking {
   status            BookingStatus @default(PENDING)
   totalAmount       String?
   paymentIntentId   String?       @unique
+  customerRating    Int?
+  customerReview    String?
+  reviewedAt        DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }

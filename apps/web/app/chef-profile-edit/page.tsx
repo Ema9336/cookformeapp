@@ -22,6 +22,7 @@ type ProfileData = {
   offersInHome: boolean;
   // Availability
   availability: { day: string; available: boolean }[];
+  blockedDates: string;
   leadTimeDays: string;
   maxBookingsPerDay: string;
   // Listing status
@@ -57,6 +58,7 @@ const defaultProfile: ProfileData = {
   deliveryTowns: "Boston, Cambridge, Brookline, Somerville, Newton",
   offersInHome: false,
   availability: DAYS.map((day) => ({ day, available: ["Mon", "Tue", "Thu", "Fri"].includes(day) })),
+  blockedDates: "",
   leadTimeDays: "2",
   maxBookingsPerDay: "4",
   listingActive: true,
@@ -171,6 +173,30 @@ export default function ChefProfileEditPage() {
           serviceCategory: isServiceCategory ? (category as ProfileData["serviceCategory"]) : "",
           cuisineType: !isServiceCategory && category ? category : defaultProfile.cuisineType,
           specialties: tags,
+          radiusMiles: String((d.deliveryRadiusMiles as number) ?? defaultProfile.radiusMiles),
+          deliveryTowns: (d.deliveryTowns as string) ?? "",
+          offersInHome: Boolean(d.offersInHome),
+          availability: DAYS.map((day) => ({
+            day,
+            available: (() => {
+              try {
+                const parsed = d.availableDays ? JSON.parse(d.availableDays as string) : [];
+                return Array.isArray(parsed) ? parsed.includes(day) : defaultProfile.availability.find((a) => a.day === day)?.available ?? false;
+              } catch {
+                return defaultProfile.availability.find((a) => a.day === day)?.available ?? false;
+              }
+            })(),
+          })),
+          blockedDates: (() => {
+            try {
+              const parsed = d.blockedDates ? JSON.parse(d.blockedDates as string) : [];
+              return Array.isArray(parsed) ? parsed.join(", ") : "";
+            } catch {
+              return "";
+            }
+          })(),
+          leadTimeDays: String((d.leadTimeDays as number) ?? defaultProfile.leadTimeDays),
+          maxBookingsPerDay: String((d.maxBookingsPerDay as number) ?? defaultProfile.maxBookingsPerDay),
         };
         const merged = { ...defaultProfile, ...patch };
         setProfile(merged);
@@ -199,6 +225,18 @@ export default function ChefProfileEditPage() {
         state: profile.state,
         category: profile.serviceCategory || profile.cuisineType,
         tags: JSON.stringify(profile.specialties),
+        deliveryRadiusMiles: Number(profile.radiusMiles) || 15,
+        deliveryTowns: profile.deliveryTowns,
+        offersInHome: profile.offersInHome,
+        availableDays: JSON.stringify(profile.availability.filter((a) => a.available).map((a) => a.day)),
+        blockedDates: JSON.stringify(
+          profile.blockedDates
+            .split(',')
+            .map((d) => d.trim())
+            .filter(Boolean)
+        ),
+        leadTimeDays: Number(profile.leadTimeDays) || 0,
+        maxBookingsPerDay: Number(profile.maxBookingsPerDay) || 1,
       });
       // Update display name if changed
       if (profile.chefName !== serverProfile.current.chefName) {
@@ -489,6 +527,16 @@ export default function ChefProfileEditPage() {
               />
             </Field>
           </div>
+
+          <Field label="Blocked Dates (YYYY-MM-DD, comma-separated)">
+            <Textarea
+              value={profile.blockedDates}
+              onChange={(v) => update({ blockedDates: v })}
+              placeholder="2026-06-12, 2026-06-13"
+              rows={2}
+            />
+            <p className="text-xs text-gray-400">Bookings on these dates will be rejected automatically.</p>
+          </Field>
         </Section>
 
         {/* Social / contact */}
