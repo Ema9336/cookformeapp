@@ -27,6 +27,14 @@ function formatExpiry(value: string) {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
+type ChefBookingDetail = {
+  serviceType: string;
+  date: string;
+  address: string;
+};
+
+const DEFAULT_SERVICE_TYPE = "delivery";
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -34,10 +42,8 @@ function CheckoutContent() {
   const legacySlug = searchParams.get("chef") || "";
   const legacyCartParam = searchParams.get("cart");
 
-  const [serviceType, setServiceType] = useState("delivery");
+  const [bookingDetailsByChef, setBookingDetailsByChef] = useState<Record<string, ChefBookingDetail>>({});
   const [guestCount, setGuestCount] = useState(2);
-  const [date, setDate] = useState("");
-  const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [allergies, setAllergies] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -97,6 +103,49 @@ function CheckoutContent() {
   const chefKey = groups.map((g) => g.chefSlug).join(",");
 
   useEffect(() => {
+    setBookingDetailsByChef((prev) => {
+      const next: Record<string, ChefBookingDetail> = {};
+      groups.forEach((group) => {
+        next[group.chefSlug] = prev[group.chefSlug] ?? {
+          serviceType: DEFAULT_SERVICE_TYPE,
+          date: "",
+          address: "",
+        };
+      });
+      return next;
+    });
+  }, [chefKey, groups]);
+
+  const updateChefDetail = (
+    chefSlug: string,
+    patch: Partial<ChefBookingDetail>,
+  ) => {
+    setBookingDetailsByChef((prev) => ({
+      ...prev,
+      [chefSlug]: {
+        serviceType: DEFAULT_SERVICE_TYPE,
+        date: "",
+        address: "",
+        ...prev[chefSlug],
+        ...patch,
+      },
+    }));
+  };
+
+  const groupsMissingDetails = groups.filter((group) => {
+    const detail = bookingDetailsByChef[group.chefSlug];
+    if (!detail?.date) return true;
+    const addressRequired =
+      detail.serviceType === "delivery" ||
+      detail.serviceType === "catering" ||
+      detail.serviceType === "private-chef";
+    if (addressRequired && !detail.address.trim()) return true;
+    return false;
+  });
+
+  const hasIncompleteChefDetails = groupsMissingDetails.length > 0;
+
+  useEffect(() => {
     trackAnalyticsEvent({
       eventType: "CUSTOM",
       label: "checkout_view",
@@ -151,9 +200,13 @@ function CheckoutContent() {
     cardCvc.replace(/\D/g, "").length >= 3;
 
   const handleSubmit = async () => {
-    if (!agreed || !date) return;
+    if (!agreed) return;
     if (groups.length === 0) {
       setError("Your cart is empty. Add items from one or more chefs first.");
+      return;
+    }
+    if (hasIncompleteChefDetails) {
+      setError("Set date and service details for each chef before checkout.");
       return;
     }
 
@@ -171,7 +224,11 @@ function CheckoutContent() {
         metadata: {
           chefs: groups.map((g) => g.chefSlug),
           chefCount: groups.length,
-          serviceType,
+          perChef: groups.map((g) => ({
+            chefSlug: g.chefSlug,
+            serviceType: bookingDetailsByChef[g.chefSlug]?.serviceType,
+            date: bookingDetailsByChef[g.chefSlug]?.date,
+          })),
           guestCount,
           total: estimatedTotal,
         },
@@ -191,10 +248,10 @@ function CheckoutContent() {
         groups.map((group) =>
           bookingsApi.create(accessToken, {
             chefSlug: group.chefSlug,
-            date,
-            serviceType,
+            date: bookingDetailsByChef[group.chefSlug].date,
+            serviceType: bookingDetailsByChef[group.chefSlug].serviceType,
             guestCount,
-            address,
+            address: bookingDetailsByChef[group.chefSlug].address,
             notes,
             allergies,
             cart: group.items.map((item) => ({ name: item.itemName, qty: item.qty, price: item.price })),
@@ -211,15 +268,19 @@ function CheckoutContent() {
         metadata: {
           chefs: groups.map((g) => g.chefSlug),
           bookingCount: bookings.length,
-          serviceType,
+          perChef: groups.map((g) => ({
+            chefSlug: g.chefSlug,
+            serviceType: bookingDetailsByChef[g.chefSlug]?.serviceType,
+            date: bookingDetailsByChef[g.chefSlug]?.date,
+          })),
           guestCount,
         },
       });
 
       const qs = new URLSearchParams({
         chef: groups[0].chefSlug,
-        date,
-        service: serviceType,
+        date: bookingDetailsByChef[groups[0].chefSlug].date,
+        service: bookingDetailsByChef[groups[0].chefSlug].serviceType,
         guests: String(guestCount),
         id: String(bookings[0].id),
         bookingCount: String(bookings.length),
@@ -297,17 +358,78 @@ function CheckoutContent() {
           )}
 
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold">Booking Details</h2>
+            <h2 className="text-xl font-semibold">Booking Details by Chef</h2>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Preferred Date</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+            {groups.map((group) => {
+              const detail = bookingDetailsByChef[group.chefSlug] ?? {
+                serviceType: DEFAULT_SERVICE_TYPE,
+                date: "",
+                address: "",
+              };
+
+              const addressRequired =
+                detail.serviceType === "delivery" ||
+                detail.serviceType === "catering" ||
+                detail.serviceType === "private-chef";
+
+              return (
+                <div key={group.chefSlug} className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-semibold">{group.chefName}</h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{group.items.reduce((sum, item) => sum + item.qty, 0)} items</span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Preferred Date</label>
+                    <input
+                      type="date"
+                      value={detail.date}
+                      onChange={(e) => updateChefDetail(group.chefSlug, { date: e.target.value })}
+                      className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Service Type</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: "delivery", label: "🚗 Delivery" },
+                        { value: "pickup", label: "🏠 Pickup" },
+                        { value: "private-chef", label: "👨‍🍳 Private Chef" },
+                        { value: "catering", label: "🎉 Catering Event" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateChefDetail(group.chefSlug, { serviceType: opt.value })}
+                          className={`rounded-2xl border p-3 text-sm font-medium transition-colors ${
+                            detail.serviceType === opt.value
+                              ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
+                              : "border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {addressRequired && (
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">
+                        {detail.serviceType === "delivery" ? "Delivery Address" : "Event Address"}
+                      </label>
+                      <input
+                        type="text"
+                        value={detail.address}
+                        onChange={(e) => updateChefDetail(group.chefSlug, { address: e.target.value })}
+                        placeholder="123 Ocean Ave, Oak Bluffs, MA"
+                        className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Number of People</label>
@@ -323,45 +445,6 @@ function CheckoutContent() {
                 >+</button>
               </div>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Service Type</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "delivery", label: "🚗 Delivery" },
-                  { value: "pickup", label: "🏠 Pickup" },
-                  { value: "private-chef", label: "👨‍🍳 Private Chef" },
-                  { value: "catering", label: "🎉 Catering Event" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setServiceType(opt.value)}
-                    className={`rounded-2xl border p-3 text-sm font-medium transition-colors ${
-                      serviceType === opt.value
-                        ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                        : "border-gray-200 dark:border-gray-700"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {(serviceType === "delivery" || serviceType === "catering" || serviceType === "private-chef") && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">
-                  {serviceType === "delivery" ? "Delivery Address" : "Event Address"}
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="123 Ocean Ave, Oak Bluffs, MA"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            )}
           </section>
 
           <section className="space-y-4">
@@ -537,14 +620,17 @@ function CheckoutContent() {
                 <span className="text-gray-500 dark:text-gray-400">Chefs</span>
                 <span className="font-medium">{groups.length}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Service</span>
-                <span className="font-medium capitalize">{serviceType}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Date</span>
-                <span className="font-medium">{date || "Not selected"}</span>
-              </div>
+              {groups.map((group) => {
+                const detail = bookingDetailsByChef[group.chefSlug];
+                return (
+                  <div key={`preview-${group.chefSlug}`} className="flex items-center justify-between gap-3">
+                    <span className="text-gray-500 dark:text-gray-400">{group.chefName}</span>
+                    <span className="font-medium text-right">
+                      {(detail?.serviceType || DEFAULT_SERVICE_TYPE).replace("-", " ")} • {detail?.date || "No date"}
+                    </span>
+                  </div>
+                );
+              })}
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Card</span>
                 <span className="font-medium">•••• {cardNumber.replace(/\D/g, "").slice(-4) || "4242"}</span>
@@ -576,7 +662,7 @@ function CheckoutContent() {
           )}
           <button
             onClick={handleSubmit}
-            disabled={!agreed || !date || submitting || paymentStatusLoading || (!paymentStatus?.bookingsEnabled && !previewCardComplete)}
+            disabled={!agreed || hasIncompleteChefDetails || submitting || paymentStatusLoading || (!paymentStatus?.bookingsEnabled && !previewCardComplete)}
             className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
             {paymentStatusLoading
@@ -589,12 +675,14 @@ function CheckoutContent() {
                     ? `Submit ${groups.length} Booking Requests`
                     : "Submit Booking Request"}
           </button>
-          {(!agreed || !date) && (
+          {(!agreed || hasIncompleteChefDetails) && (
             <p className="text-center text-xs text-gray-400 mt-2">
-              {!date ? "Select a date" : "Agree to food safety notice"} to continue
+              {hasIncompleteChefDetails
+                ? `Finish date/service details for ${groupsMissingDetails.length} chef${groupsMissingDetails.length === 1 ? "" : "s"}`
+                : "Agree to food safety notice"} to continue
             </p>
           )}
-          {paymentStatus && !paymentStatus.bookingsEnabled && agreed && date && !previewCardComplete && (
+          {paymentStatus && !paymentStatus.bookingsEnabled && agreed && !hasIncompleteChefDetails && !previewCardComplete && (
             <p className="text-center text-xs text-gray-400 mt-2">
               Enter sample card details to preview the final payment step.
             </p>
