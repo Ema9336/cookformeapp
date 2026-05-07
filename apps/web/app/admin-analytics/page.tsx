@@ -153,7 +153,7 @@ function GeoVisitorMap({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl bg-[#0d1117] border border-gray-800"
+      className="relative w-full overflow-hidden rounded-xl bg-[#101614] border border-emerald-950/60"
       style={{ paddingBottom: "50%" }}
     >
       <svg
@@ -165,13 +165,13 @@ function GeoVisitorMap({
         {/* Grid */}
         {[-60, -30, 0, 30, 60].map((lat) => {
           const y = ((90 - lat) / 180) * H;
-          return <line key={lat} x1={0} y1={y} x2={W} y2={y} stroke="#1f2937" strokeWidth={0.5} />;
+          return <line key={lat} x1={0} y1={y} x2={W} y2={y} stroke="#24312d" strokeWidth={0.5} />;
         })}
         {[-120, -60, 0, 60, 120].map((lon) => {
           const x = ((lon + 180) / 360) * W;
-          return <line key={lon} x1={x} y1={0} x2={x} y2={H} stroke="#1f2937" strokeWidth={0.5} />;
+          return <line key={lon} x1={x} y1={0} x2={x} y2={H} stroke="#24312d" strokeWidth={0.5} />;
         })}
-        <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke="#374151" strokeWidth={1} strokeDasharray="4 4" />
+        <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke="#334540" strokeWidth={1} strokeDasharray="4 4" />
 
         {/* Country ghost rings */}
         {countryBubbles.map((b) => (
@@ -180,8 +180,8 @@ function GeoVisitorMap({
             cx={b.x}
             cy={b.y}
             r={b.r}
-            fill="rgba(99,102,241,0.08)"
-            stroke="rgba(99,102,241,0.25)"
+            fill="rgba(110,231,183,0.06)"
+            stroke="rgba(110,231,183,0.18)"
             strokeWidth={1}
             strokeDasharray="3 2"
             className="cursor-pointer"
@@ -197,8 +197,8 @@ function GeoVisitorMap({
               cx={b.x}
               cy={b.y}
               r={b.r}
-              fill="rgba(99,102,241,0.5)"
-              stroke="rgba(165,180,252,0.9)"
+              fill="rgba(94,234,212,0.34)"
+              stroke="rgba(153,246,228,0.55)"
               strokeWidth={1}
               className="cursor-pointer"
               onMouseEnter={(e) =>
@@ -213,7 +213,7 @@ function GeoVisitorMap({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={8}
-                fill="rgba(255,255,255,0.9)"
+                fill="rgba(236,253,245,0.9)"
                 className="pointer-events-none select-none"
               >
                 {b.region}
@@ -234,7 +234,7 @@ function GeoVisitorMap({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={9}
-                fill="rgba(129,140,248,0.9)"
+                fill="rgba(167,243,208,0.88)"
                 className="pointer-events-none select-none"
               >
                 {b.country}
@@ -243,20 +243,20 @@ function GeoVisitorMap({
           ))}
 
         {/* Axis labels */}
-        <text x={4} y={12} fontSize={8} fill="#6b7280">60°N</text>
-        <text x={4} y={H / 2 - 4} fontSize={8} fill="#6b7280">EQ</text>
-        <text x={4} y={H - 4} fontSize={8} fill="#6b7280">60°S</text>
+        <text x={4} y={12} fontSize={8} fill="#7a8b85">60°N</text>
+        <text x={4} y={H / 2 - 4} fontSize={8} fill="#7a8b85">EQ</text>
+        <text x={4} y={H - 4} fontSize={8} fill="#7a8b85">60°S</text>
 
         {/* Legend */}
-        <circle cx={W - 120} cy={H - 20} r={5} fill="rgba(99,102,241,0.08)" stroke="rgba(99,102,241,0.25)" strokeWidth={1} strokeDasharray="3 2"/>
-        <text x={W - 113} y={H - 19} fontSize={7} fill="#6b7280" dominantBaseline="middle">Country</text>
-        <circle cx={W - 68} cy={H - 20} r={5} fill="rgba(99,102,241,0.5)" stroke="rgba(165,180,252,0.9)" strokeWidth={1}/>
-        <text x={W - 61} y={H - 19} fontSize={7} fill="#6b7280" dominantBaseline="middle">Region</text>
+        <circle cx={W - 120} cy={H - 20} r={5} fill="rgba(110,231,183,0.06)" stroke="rgba(110,231,183,0.18)" strokeWidth={1} strokeDasharray="3 2"/>
+        <text x={W - 113} y={H - 19} fontSize={7} fill="#7a8b85" dominantBaseline="middle">Country</text>
+        <circle cx={W - 68} cy={H - 20} r={5} fill="rgba(94,234,212,0.34)" stroke="rgba(153,246,228,0.55)" strokeWidth={1}/>
+        <text x={W - 61} y={H - 19} fontSize={7} fill="#7a8b85" dominantBaseline="middle">Region</text>
       </svg>
 
       {tooltip && (
         <div
-          className="absolute pointer-events-none z-10 bg-black/90 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white shadow-xl"
+          className="absolute pointer-events-none z-10 bg-zinc-950/95 border border-emerald-950/60 rounded-lg px-3 py-2 text-xs text-white shadow-xl"
           style={{ left: tooltip.x + 12, top: tooltip.y - 10 }}
         >
           <span className="font-semibold">{tooltip.label}</span>
@@ -395,6 +395,9 @@ export default function AdminAnalyticsPage() {
   const [eventTypeFilter, setEventTypeFilter] = useState("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  const panelClass = "bg-white/90 dark:bg-zinc-900/90 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)] dark:shadow-none";
+  const statValueClass = "text-2xl font-bold text-slate-900 dark:text-slate-100";
 
   const loadData = async () => {
     if (!accessToken) return;
@@ -563,7 +566,7 @@ export default function AdminAnalyticsPage() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className={`${panelClass} p-4`}>
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -627,7 +630,7 @@ export default function AdminAnalyticsPage() {
               </button>
               <button
                 onClick={() => void loadData()}
-                className="text-xs px-3 py-2 rounded-lg border border-black dark:border-white"
+                className="text-xs px-3 py-2 rounded-lg border border-emerald-300/80 dark:border-emerald-800/60 bg-emerald-50/70 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200"
               >
                 Apply
               </button>
@@ -657,69 +660,69 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold">{summary?.totals.events ?? 0}</p>
-            <p className="text-xs text-gray-500">Total Events</p>
+          <div className={`${panelClass} p-4`}>
+            <p className={statValueClass}>{summary?.totals.events ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Total Events</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary?.totals.pageViews ?? 0}</p>
-            <p className="text-xs text-gray-500">Page Views</p>
+          <div className={`${panelClass} p-4`}>
+            <p className="text-2xl font-bold text-sky-700 dark:text-sky-300">{summary?.totals.pageViews ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Page Views</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{summary?.totals.clicks ?? 0}</p>
-            <p className="text-xs text-gray-500">Clicks</p>
+          <div className={`${panelClass} p-4`}>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{summary?.totals.clicks ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Clicks</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{summary?.totals.formSubmits ?? 0}</p>
-            <p className="text-xs text-gray-500">Form Submits</p>
+          <div className={`${panelClass} p-4`}>
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{summary?.totals.formSubmits ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Form Submits</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold">{summary?.totals.uniqueVisitors ?? 0}</p>
-            <p className="text-xs text-gray-500">Unique Visitors</p>
+          <div className={`${panelClass} p-4`}>
+            <p className={statValueClass}>{summary?.totals.uniqueVisitors ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Unique Visitors</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold">{summary?.totals.uniqueSessions ?? 0}</p>
-            <p className="text-xs text-gray-500">Unique Sessions</p>
+          <div className={`${panelClass} p-4`}>
+            <p className={statValueClass}>{summary?.totals.uniqueSessions ?? 0}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Unique Sessions</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
-            <p className="text-2xl font-bold">{formatDuration(summary?.totals.avgSessionDurationSec ?? 0)}</p>
-            <p className="text-xs text-gray-500">Avg Session Duration</p>
+          <div className={`${panelClass} p-4`}>
+            <p className={statValueClass}>{formatDuration(summary?.totals.avgSessionDurationSec ?? 0)}</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Avg Session Duration</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className={`${panelClass} p-4`}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Support Bot Performance</h2>
-            <span className="text-xs text-gray-500">CUSTOM events</span>
+            <span className="text-xs text-gray-500 dark:text-slate-400">CUSTOM events</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
-              <p className="text-xl font-bold text-green-600 dark:text-green-400">{summary?.supportBot.answered ?? 0}</p>
-              <p className="text-xs text-gray-500">Answered</p>
+            <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-900/15 p-3">
+              <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{summary?.supportBot.answered ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Answered</p>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
-              <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{summary?.supportBot.unanswered ?? 0}</p>
-              <p className="text-xs text-gray-500">Unanswered</p>
+            <div className="rounded-xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-900/15 p-3">
+              <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{summary?.supportBot.unanswered ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Unanswered</p>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
-              <p className="text-xl font-bold">{summary?.supportBot.questions ?? 0}</p>
-              <p className="text-xs text-gray-500">Questions</p>
+            <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/60 p-3 bg-white/50 dark:bg-zinc-950/30">
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{summary?.supportBot.questions ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Questions</p>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
-              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{summary?.supportBot.answerRatePct ?? 0}%</p>
-              <p className="text-xs text-gray-500">Answer Rate</p>
+            <div className="rounded-xl border border-sky-200/80 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-900/15 p-3">
+              <p className="text-xl font-bold text-sky-700 dark:text-sky-300">{summary?.supportBot.answerRatePct ?? 0}%</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Answer Rate</p>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
-              <p className="text-xl font-bold text-rose-600 dark:text-rose-400">{summary?.supportBot.contactClicks ?? 0}</p>
-              <p className="text-xs text-gray-500">Contact Clicks</p>
+            <div className="rounded-xl border border-rose-200/80 dark:border-rose-800/60 bg-rose-50/50 dark:bg-rose-900/15 p-3">
+              <p className="text-xl font-bold text-rose-700 dark:text-rose-300">{summary?.supportBot.contactClicks ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Contact Clicks</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className={`${panelClass} p-4`}>
           <h2 className="font-semibold mb-3">Funnel Drop-off</h2>
           {(summary?.funnel?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-500">No funnel data yet.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">No funnel data yet.</p>
           ) : (
             <div className="space-y-3">
               {summary?.funnel.map((step) => (
@@ -730,9 +733,9 @@ export default function AdminAnalyticsPage() {
                       {step.count} sessions · {step.conversionFromPrevPct}% kept · {step.dropOffFromPrevPct}% drop
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+                  <div className="h-2 rounded-full bg-gray-200 dark:bg-zinc-800 overflow-hidden">
                     <div
-                      className="h-full bg-black dark:bg-white"
+                      className="h-full bg-emerald-700 dark:bg-emerald-400"
                       style={{ width: `${Math.max(2, step.conversionFromPrevPct)}%` }}
                     />
                   </div>
@@ -742,10 +745,10 @@ export default function AdminAnalyticsPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4 overflow-x-auto">
+        <div className={`${panelClass} p-4 overflow-x-auto`}>
           <h2 className="font-semibold mb-3">Funnel By Traffic Source</h2>
           {(summary?.sourceFunnel?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-500">No source funnel data yet.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">No source funnel data yet.</p>
           ) : (
             <table className="w-full text-xs">
               <thead>
@@ -779,10 +782,10 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className={`${panelClass} p-4`}>
             <h2 className="font-semibold mb-3">Top Pages</h2>
             {(summary?.topPages?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No page view data yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">No page view data yet.</p>
             ) : (
               <div className="space-y-2">
                 {summary?.topPages.map((item) => (
@@ -795,10 +798,10 @@ export default function AdminAnalyticsPage() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className={`${panelClass} p-4`}>
             <h2 className="font-semibold mb-3">Top Click Labels</h2>
             {(summary?.topClicks?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No click data yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">No click data yet.</p>
             ) : (
               <div className="space-y-2">
                 {summary?.topClicks.map((item) => (
@@ -813,23 +816,23 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Geo bubble map */}
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className={`${panelClass} p-4`}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Visitor Geo Map</h2>
-            <span className="text-xs text-gray-500">bubble size = event volume</span>
+            <span className="text-xs text-gray-500 dark:text-slate-400">bubble size = event volume</span>
           </div>
           {(summary?.topCountries?.length ?? 0) === 0 ? (
-            <p className="text-sm text-gray-500">No geo data yet.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">No geo data yet.</p>
           ) : (
             <GeoVisitorMap topCountries={summary!.topCountries} topRegions={summary!.topRegions} />
           )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className={`${panelClass} p-4`}>
             <h2 className="font-semibold mb-3">Top Countries</h2>
             {(summary?.topCountries?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No geo data yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">No geo data yet.</p>
             ) : (
               <div className="space-y-2">
                 {summary?.topCountries.map((item) => (
@@ -842,10 +845,10 @@ export default function AdminAnalyticsPage() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className={`${panelClass} p-4`}>
             <h2 className="font-semibold mb-3">Top Regions</h2>
             {(summary?.topRegions?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No region data yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">No region data yet.</p>
             ) : (
               <div className="space-y-2">
                 {summary?.topRegions.map((item) => (
@@ -858,10 +861,10 @@ export default function AdminAnalyticsPage() {
             )}
           </div>
 
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className={`${panelClass} p-4`}>
             <h2 className="font-semibold mb-3">Top Cities</h2>
             {(summary?.topCities?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-500">No city data yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">No city data yet.</p>
             ) : (
               <div className="space-y-2">
                 {summary?.topCities.map((item) => (
@@ -875,23 +878,23 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className={`${panelClass} p-4`}>
           <h2 className="font-semibold mb-3">User/Visitor Journeys</h2>
           {journeys.length === 0 ? (
-            <p className="text-sm text-gray-500">No journey data yet.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">No journey data yet.</p>
           ) : (
             <div className="space-y-4">
               {journeys.map((journey) => (
-                <div key={journey.key} className="rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+                <div key={journey.key} className="rounded-xl border border-emerald-100 dark:border-emerald-900/60 bg-white/40 dark:bg-zinc-950/20 p-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs mb-2">
                     <span className="px-2 py-1 rounded-full border border-gray-300 dark:border-gray-700 font-semibold">{journey.source}</span>
                     <span>{journey.user?.email ?? `visitor:${journey.visitorId ?? 'anonymous'}`}</span>
-                    <span className="text-gray-500">{journey.eventCount} events</span>
-                    <span className="text-gray-500">{formatDuration(journey.durationSec)}</span>
+                    <span className="text-gray-500 dark:text-slate-400">{journey.eventCount} events</span>
+                    <span className="text-gray-500 dark:text-slate-400">{formatDuration(journey.durationSec)}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {journey.events.map((event) => (
-                      <span key={event.id} className="text-[11px] px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800">
+                      <span key={event.id} className="text-[11px] px-2 py-1 rounded-full border border-emerald-100 dark:border-emerald-900/60 bg-white/50 dark:bg-zinc-900/50">
                         {event.eventType}:{event.path ?? event.label ?? 'event'}
                       </span>
                     ))}
@@ -902,7 +905,7 @@ export default function AdminAnalyticsPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className={`${panelClass} overflow-hidden`}>
           <div className="grid grid-cols-12 gap-3 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-100 dark:border-gray-900">
             <div className="col-span-2">When</div>
             <div className="col-span-1">Type</div>
