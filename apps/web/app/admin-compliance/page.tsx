@@ -582,15 +582,15 @@ export default function AdminCompliancePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-black dark:text-white">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
       {/* Header */}
-      <div className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 px-6 py-4 sticky top-0 z-30">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               ← Home
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <span className="text-emerald-200">|</span>
             <h1 className="font-bold text-xl">⚖️ Compliance Review</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -601,25 +601,25 @@ export default function AdminCompliancePage() {
             )}
             <Link
               href="/admin-users"
-              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
             >
               User Roles
             </Link>
             <Link
               href="/admin-audit"
-              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
             >
               Audit Logs
             </Link>
             <Link
               href="/admin-analytics"
-              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
             >
               Analytics
             </Link>
             <Link
               href="/chef-onboarding"
-              className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
             >
               + Test Onboarding
             </Link>
@@ -646,7 +646,7 @@ export default function AdminCompliancePage() {
             { label: "Approved", value: counts.approved, color: "text-green-600 dark:text-green-400" },
             { label: "Rejected / Changes", value: counts.rejected + counts.changes_requested, color: "text-red-500 dark:text-red-400" },
           ].map(({ label, value, color }) => (
-            <div key={label} className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+            <div key={label} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
               <p className="text-sm text-gray-500 mt-0.5">{label}</p>
             </div>
@@ -661,8 +661,8 @@ export default function AdminCompliancePage() {
               onClick={() => setFilter(key)}
               className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition border ${
                 filter === key
-                  ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
-                  : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400"
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-slate-500 border-emerald-200 hover:border-emerald-400"
               }`}
             >
               {label}
@@ -679,7 +679,7 @@ export default function AdminCompliancePage() {
             <button
               key={app.id}
               onClick={() => setSelected(app)}
-              className="w-full bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-5 text-left hover:border-green-500 hover:shadow-md transition group"
+              className="w-full bg-white rounded-2xl border border-emerald-100 p-5 text-left hover:border-emerald-500 hover:shadow-md transition group"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">

@@ -527,26 +527,26 @@ export default function AdminAnalyticsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-black dark:text-white">
-      <div className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 px-6 py-4 sticky top-0 z-30">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               ← Home
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-compliance" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-compliance" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               Compliance
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-users" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-users" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               User Roles
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-audit" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-audit" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               Audit Logs
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <span className="text-emerald-200">|</span>
             <h1 className="font-bold text-xl">Analytics</h1>
           </div>
           <button

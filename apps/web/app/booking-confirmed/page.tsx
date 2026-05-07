@@ -81,7 +81,7 @@ function BookingConfirmedContent() {
         {/* Chef Card */}
         <div className="rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="relative h-36 w-full">
-            <Image src={chef.image} alt={chef.name} fill className="object-cover" />
+            <Image src={chef.image} alt={chef.name} fill sizes="(min-width: 768px) 720px, 100vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 text-white">
               <p className="text-xl font-bold">{chef.name}</p>

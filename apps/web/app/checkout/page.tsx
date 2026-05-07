@@ -334,17 +334,22 @@ function CheckoutContent() {
     }
   };
 
+  const panelClass =
+    "rounded-3xl border border-emerald-100/70 bg-white/90 backdrop-blur-sm shadow-[0_18px_55px_-30px_rgba(6,78,59,0.55)]";
+  const fieldClass =
+    "w-full rounded-2xl border border-emerald-200 bg-white/85 p-4 focus:outline-none focus:ring-2 focus:ring-emerald-500";
+
   return (
-    <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white pb-36">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] text-slate-900 pb-36">
       <div className="max-w-3xl mx-auto">
 
         <div className="px-6 pt-6">
           {groups.length <= 1 ? (
-            <Link href={`/chef/${baseChef.slug}`} className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Link href={`/chef/${baseChef.slug}`} className="text-sm text-slate-500 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
               ← Back to {baseChef.name}
             </Link>
           ) : (
-            <Link href="/" className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Link href="/" className="text-sm text-slate-500 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
               ← Back to chefs
             </Link>
           )}
@@ -353,7 +358,7 @@ function CheckoutContent() {
         <div className="p-6 space-y-7">
           <h1 className="text-3xl font-bold">Booking Request</h1>
 
-          <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 flex gap-4 items-center">
+          <div className={`${panelClass} p-4 flex gap-4 items-center`}>
             <div className="relative h-20 w-20 overflow-hidden rounded-2xl shrink-0">
               <Image src={baseChef.image} alt={baseChef.name} fill className="object-cover" />
             </div>
@@ -361,19 +366,19 @@ function CheckoutContent() {
               {groups.length <= 1 ? (
                 <>
                   <h2 className="text-xl font-bold">{baseChef.name}</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{baseChef.city} • {baseChef.distance}</p>
+                  <p className="text-slate-500 text-sm">{baseChef.city} • {baseChef.distance}</p>
                   <p className="text-sm mt-1">⭐ {baseChef.rating} ({baseChef.reviews} reviews)</p>
                 </>
               ) : (
                 <>
                   <h2 className="text-xl font-bold">Multi-Chef Order</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{groups.length} chefs in this cart</p>
+                  <p className="text-slate-500 text-sm">{groups.length} chefs in this cart</p>
                   <p className="text-sm mt-1">One checkout submits separate booking requests per chef.</p>
                 </>
               )}
             </div>
             <div className="text-right">
-              <p className="text-xs text-green-600 font-semibold bg-green-50 dark:bg-green-950 px-2 py-1 rounded-full">✅ Licensed</p>
+              <p className="text-xs text-emerald-700 font-semibold bg-emerald-100 px-2 py-1 rounded-full">✅ Licensed</p>
             </div>
           </div>
 
@@ -383,15 +388,15 @@ function CheckoutContent() {
                 <h2 className="text-xl font-semibold">Your Order</h2>
                 <button
                   onClick={handleClearCart}
-                  className="text-xs font-semibold text-red-500 border border-red-200 dark:border-red-800 px-2.5 py-1 rounded-lg"
+                  className="text-xs font-semibold text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors"
                 >
                   Clear cart
                 </button>
               </div>
               <div className="space-y-3">
                 {groups.map((group) => (
-                  <div key={group.chefSlug} className="rounded-3xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-900 text-sm font-semibold">
+                  <div key={group.chefSlug} className={`${panelClass} divide-y divide-emerald-100 overflow-hidden`}>
+                    <div className="px-4 py-3 bg-emerald-50/70 text-sm font-semibold">
                       {group.chefName}
                     </div>
                     {group.items.map((item) => (
@@ -400,24 +405,24 @@ function CheckoutContent() {
                           <span className="font-medium">{item.qty}× {item.itemName}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {item.price && <span className="text-green-600 font-semibold text-sm mr-1">{item.price}</span>}
+                          {item.price && <span className="text-emerald-700 font-semibold text-sm mr-1">{item.price}</span>}
                           <button
                             onClick={() => changeItemQty(group.chefSlug, item.itemName, -1)}
-                            className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-700 text-sm font-bold"
+                            className="w-7 h-7 rounded-full border border-emerald-300 text-sm font-bold hover:bg-emerald-50 transition-colors"
                             aria-label={`Decrease ${item.itemName}`}
                           >
                             -
                           </button>
                           <button
                             onClick={() => changeItemQty(group.chefSlug, item.itemName, 1)}
-                            className="w-7 h-7 rounded-full border border-gray-300 dark:border-gray-700 text-sm font-bold"
+                            className="w-7 h-7 rounded-full border border-emerald-300 text-sm font-bold hover:bg-emerald-50 transition-colors"
                             aria-label={`Increase ${item.itemName}`}
                           >
                             +
                           </button>
                           <button
                             onClick={() => removeItem(group.chefSlug, item.itemName)}
-                            className="text-xs text-red-500 font-semibold px-2 py-1 rounded-md border border-red-200 dark:border-red-800"
+                            className="text-xs text-red-600 font-semibold px-2 py-1 rounded-md border border-red-200 hover:bg-red-50 transition-colors"
                           >
                             Remove
                           </button>
@@ -446,24 +451,24 @@ function CheckoutContent() {
                 detail.serviceType === "private-chef";
 
               return (
-                <div key={group.chefSlug} className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+                <div key={group.chefSlug} className={`${panelClass} p-4 space-y-4`}>
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-semibold">{group.chefName}</h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{group.items.reduce((sum, item) => sum + item.qty, 0)} items</span>
+                    <span className="text-xs text-slate-500">{group.items.reduce((sum, item) => sum + item.qty, 0)} items</span>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Preferred Date</label>
+                    <label className="text-sm font-medium text-slate-500 px-1">Preferred Date</label>
                     <input
                       type="date"
                       value={detail.date}
                       onChange={(e) => updateChefDetail(group.chefSlug, { date: e.target.value })}
-                      className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className={fieldClass}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Service Type</label>
+                    <label className="text-sm font-medium text-slate-500 px-1">Service Type</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { value: "delivery", label: "🚗 Delivery" },
@@ -476,8 +481,8 @@ function CheckoutContent() {
                           onClick={() => updateChefDetail(group.chefSlug, { serviceType: opt.value })}
                           className={`rounded-2xl border p-3 text-sm font-medium transition-colors ${
                             detail.serviceType === opt.value
-                              ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                              : "border-gray-200 dark:border-gray-700"
+                              ? "border-emerald-500 bg-emerald-100 text-emerald-800"
+                              : "border-emerald-200 bg-white/70 hover:bg-emerald-50"
                           }`}
                         >
                           {opt.label}
@@ -488,7 +493,7 @@ function CheckoutContent() {
 
                   {addressRequired && (
                     <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">
+                      <label className="text-sm font-medium text-slate-500 px-1">
                         {detail.serviceType === "delivery" ? "Delivery Address" : "Event Address"}
                       </label>
                       <input
@@ -496,7 +501,7 @@ function CheckoutContent() {
                         value={detail.address}
                         onChange={(e) => updateChefDetail(group.chefSlug, { address: e.target.value })}
                         placeholder="123 Ocean Ave, Oak Bluffs, MA"
-                        className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className={fieldClass}
                       />
                     </div>
                   )}
@@ -505,16 +510,16 @@ function CheckoutContent() {
             })}
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Number of People</label>
-              <div className="flex items-center gap-4 rounded-2xl border border-gray-300 dark:border-gray-700 p-4">
+              <label className="text-sm font-medium text-slate-500 px-1">Number of People</label>
+              <div className={`${panelClass} flex items-center gap-4 p-4`}>
                 <button
                   onClick={() => setGuestCount((n) => Math.max(1, n - 1))}
-                  className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-700 flex items-center justify-center text-xl font-bold"
+                  className="w-9 h-9 rounded-full border border-emerald-300 flex items-center justify-center text-xl font-bold hover:bg-emerald-50 transition-colors"
                 >−</button>
                 <span className="flex-1 text-center font-semibold text-lg">{guestCount} {guestCount === 1 ? "person" : "people"}</span>
                 <button
                   onClick={() => setGuestCount((n) => n + 1)}
-                  className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold"
+                  className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-bold"
                 >+</button>
               </div>
             </div>
@@ -524,31 +529,31 @@ function CheckoutContent() {
             <h2 className="text-xl font-semibold">Dietary & Special Requests</h2>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Allergies or dietary restrictions</label>
+              <label className="text-sm font-medium text-slate-500 px-1">Allergies or dietary restrictions</label>
               <input
                 type="text"
                 value={allergies}
                 onChange={(e) => setAllergies(e.target.value)}
                 placeholder="e.g. nut allergy, gluten-free, vegan..."
-                className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={fieldClass}
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Additional notes</label>
+              <label className="text-sm font-medium text-slate-500 px-1">Additional notes</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Anything else the chef should know..."
                 rows={3}
-                className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={`${fieldClass} resize-none`}
               />
             </div>
           </section>
 
-          <section className="rounded-3xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-5 space-y-2">
+          <section className="rounded-3xl border border-amber-300 bg-amber-50/95 p-5 space-y-2 shadow-[0_18px_55px_-35px_rgba(146,64,14,0.6)]">
             <h3 className="font-semibold text-base">⚠️ Food Safety Notice</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Menu items may contain allergens including shellfish, tree nuts, dairy, and gluten. Some meals are prepared in shared kitchen environments. Please disclose all allergies above. CookForMe verifies chef licenses but is not responsible for undisclosed dietary needs.
             </p>
             <label className="flex items-start gap-3 mt-3 cursor-pointer">
@@ -558,24 +563,24 @@ function CheckoutContent() {
                 onChange={(e) => setAgreed(e.target.checked)}
                 className="mt-1 accent-green-600 w-4 h-4"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">I have read the food safety notice and disclosed all relevant allergies.</span>
+              <span className="text-sm text-slate-700">I have read the food safety notice and disclosed all relevant allergies.</span>
             </label>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold">Payment Status</h2>
-            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-2">
+            <div className={`${panelClass} p-4 space-y-2`}>
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className={`px-2 py-1 rounded-full font-semibold ${paymentStatus?.mode === "test" ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
+                <span className={`px-2 py-1 rounded-full font-semibold ${paymentStatus?.mode === "test" ? "bg-cyan-100 text-cyan-800" : "bg-amber-100 text-amber-800"}`}>
                   {paymentStatusLoading ? "Checking…" : paymentStatus?.mode === "test" ? "Stripe Test Mode" : "Payments Disabled"}
                 </span>
                 {paymentStatus && (
-                  <span className="text-gray-500 dark:text-gray-400">
+                  <span className="text-slate-500">
                     {paymentStatus.bookingsEnabled ? "Bookings enabled" : "Bookings disabled"}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 {paymentStatusLoading
                   ? "Checking whether bookings and payments are currently enabled."
                   : paymentStatus?.message}
@@ -594,74 +599,74 @@ function CheckoutContent() {
             </div>
 
             {!paymentStatus?.bookingsEnabled && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-slate-500">
                 Use sample values only. This preview does not send or process any payment information.
               </p>
             )}
 
-            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+            <div className={`${panelClass} p-4 space-y-4`}>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Cardholder name</label>
+                <label className="text-sm font-medium text-slate-500 px-1">Cardholder name</label>
                 <input
                   type="text"
                   value={cardholderName}
                   onChange={(e) => setCardholderName(e.target.value)}
                   placeholder="Name on card"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={fieldClass}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Card number</label>
+                <label className="text-sm font-medium text-slate-500 px-1">Card number</label>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                   placeholder="4242 4242 4242 4242"
-                  className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className={fieldClass}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">Expiry</label>
+                  <label className="text-sm font-medium text-slate-500 px-1">Expiry</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={cardExpiry}
                     onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
                     placeholder="12/34"
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={fieldClass}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-500 dark:text-gray-400 px-1">CVC</label>
+                  <label className="text-sm font-medium text-slate-500 px-1">CVC</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={cardCvc}
                     onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
                     placeholder="123"
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-transparent p-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className={fieldClass}
                   />
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-gray-50 dark:bg-zinc-900 p-4 space-y-2 text-sm">
+              <div className="rounded-2xl bg-emerald-50/60 p-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Chefs</span>
+                  <span className="text-slate-500">Chefs</span>
                   <span>{groups.length || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                  <span className="text-slate-500">Subtotal</span>
                   <span>{subtotal > 0 ? `$${subtotal.toFixed(2)}` : "Calculated at payment"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Estimated service fee</span>
+                  <span className="text-slate-500">Estimated service fee</span>
                   <span>{subtotal > 0 ? `$${estimatedFees.toFixed(2)}` : "TBD"}</span>
                 </div>
-                <div className="flex items-center justify-between font-semibold text-base pt-1 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between font-semibold text-base pt-1 border-t border-emerald-200">
                   <span>Estimated total</span>
                   <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Shown when items have prices"}</span>
                 </div>
@@ -674,30 +679,30 @@ function CheckoutContent() {
       {previewComplete && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewComplete(false)} />
-          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 p-6 space-y-4 shadow-2xl">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-emerald-100 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-green-600">Preview Complete</p>
+                <p className="text-sm font-semibold text-emerald-600">Preview Complete</p>
                 <h2 className="text-2xl font-bold">Final payment step preview</h2>
               </div>
               <button
                 onClick={() => setPreviewComplete(false)}
-                className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-700"
+                className="w-9 h-9 rounded-full border border-emerald-300"
               >
                 ✕
               </button>
             </div>
 
-            <div className="rounded-2xl bg-gray-50 dark:bg-zinc-950 p-4 text-sm space-y-2">
+            <div className="rounded-2xl bg-emerald-50/60 p-4 text-sm space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Chefs</span>
+                <span className="text-slate-500">Chefs</span>
                 <span className="font-medium">{groups.length}</span>
               </div>
               {groups.map((group) => {
                 const detail = bookingDetailsByChef[group.chefSlug];
                 return (
                   <div key={`preview-${group.chefSlug}`} className="flex items-center justify-between gap-3">
-                    <span className="text-gray-500 dark:text-gray-400">{group.chefName}</span>
+                    <span className="text-slate-500">{group.chefName}</span>
                     <span className="font-medium text-right">
                       {(detail?.serviceType || DEFAULT_SERVICE_TYPE).replace("-", " ")} • {detail?.date || "No date"}
                     </span>
@@ -705,22 +710,22 @@ function CheckoutContent() {
                 );
               })}
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Card</span>
+                <span className="text-slate-500">Card</span>
                 <span className="font-medium">•••• {cardNumber.replace(/\D/g, "").slice(-4) || "4242"}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-2 font-semibold">
+              <div className="flex items-center justify-between border-t border-emerald-200 pt-2 font-semibold">
                 <span>Total</span>
                 <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Calculated at payment"}</span>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200">
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
               This is a preview only. No payment was processed, no booking was submitted, and no card data was sent to Stripe.
             </div>
 
             <button
               onClick={() => setPreviewComplete(false)}
-              className="w-full rounded-2xl bg-green-600 text-white py-4 font-semibold text-lg"
+              className="w-full rounded-2xl bg-emerald-600 text-white py-4 font-semibold text-lg"
             >
               Back to Checkout Preview
             </button>
@@ -728,7 +733,7 @@ function CheckoutContent() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40">
         <div className="max-w-3xl mx-auto">
           {error && (
             <p className="text-center text-sm text-red-500 mb-2">{error}</p>
@@ -736,7 +741,7 @@ function CheckoutContent() {
           <button
             onClick={handleSubmit}
             disabled={!agreed || hasIncompleteChefDetails || submitting || paymentStatusLoading || (!paymentStatus?.bookingsEnabled && !previewCardComplete)}
-            className="w-full rounded-2xl bg-green-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
+            className="w-full rounded-2xl bg-emerald-600 disabled:opacity-40 text-white py-4 font-semibold text-lg"
           >
             {paymentStatusLoading
               ? "Checking availability…"
@@ -749,14 +754,14 @@ function CheckoutContent() {
                     : "Submit Booking Request"}
           </button>
           {(!agreed || hasIncompleteChefDetails) && (
-            <p className="text-center text-xs text-gray-400 mt-2">
+            <p className="text-center text-xs text-slate-500 mt-2">
               {hasIncompleteChefDetails
                 ? `Finish date/service details for ${groupsMissingDetails.length} chef${groupsMissingDetails.length === 1 ? "" : "s"}`
                 : "Agree to food safety notice"} to continue
             </p>
           )}
           {paymentStatus && !paymentStatus.bookingsEnabled && agreed && !hasIncompleteChefDetails && !previewCardComplete && (
-            <p className="text-center text-xs text-gray-400 mt-2">
+            <p className="text-center text-xs text-slate-500 mt-2">
               Enter sample card details to preview the final payment step.
             </p>
           )}

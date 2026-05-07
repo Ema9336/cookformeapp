@@ -27,18 +27,18 @@ function MenuSection({
       <h2 className="text-2xl font-semibold mb-3">{title}</h2>
       <div className="space-y-3">
         {items.map((item) => (
-          <div key={item.name} className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 flex justify-between items-center">
+          <div key={item.name} className="rounded-2xl border border-emerald-100 bg-white/90 shadow-[0_8px_30px_-18px_rgba(6,78,59,0.45)] p-4 flex justify-between items-center">
             <button className="text-left flex-1" onClick={() => onViewDetail(item)}>
               <p className="font-medium">{item.name}</p>
               {item.ingredients && (
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{item.ingredients}</p>
+                <p className="text-base text-slate-400 mt-1">{item.ingredients}</p>
               )}
             </button>
             <div className="flex items-center gap-3 ml-4">
-              {item.price && <span className="text-green-600 font-semibold text-sm whitespace-nowrap">{item.price}</span>}
+              {item.price && <span className="text-emerald-700 font-semibold text-base whitespace-nowrap">{item.price}</span>}
               <button
                 onClick={() => onAdd(item)}
-                className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold shrink-0"
+                className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shrink-0 hover:bg-emerald-700 transition-colors"
               >+</button>
             </div>
           </div>
@@ -54,7 +54,11 @@ export default function ChefDetailPage() {
   const dynamicChefs = useChefLocations(userLocation);
   const [favorited, setFavorited] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
-  const [cartTotal, setCartTotal] = useState(() => getCartTotalQty());
+  const [cartTotal, setCartTotal] = useState(0);
+
+  useEffect(() => {
+    setCartTotal(getCartTotalQty());
+  }, []);
   const [drawerItem, setDrawerItem] = useState<MenuItem | null>(null);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
@@ -136,26 +140,25 @@ export default function ChefDetailPage() {
   const bookingsEnabled = paymentStatus?.bookingsEnabled ?? false;
 
   return (
-    <main className="min-h-screen bg-white text-black dark:bg-black dark:text-white">
-
+    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] text-slate-900">
       {/* Always-visible top nav */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
-        <Link href="/" className="text-lg font-bold">Cook For Me</Link>
-        <Link href="/chef-onboarding" className="text-sm font-semibold px-4 py-2 rounded-full bg-green-600 text-white">Become a Chef</Link>
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
+        <Link href="/" className="text-xl font-bold text-slate-900">Cook For Me</Link>
+        <Link href="/chef-onboarding" className="text-base font-semibold px-5 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">Become a Chef</Link>
       </div>
 
       {/* Sticky Header on scroll */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 px-6 py-3 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
-        <span className="font-semibold text-lg truncate">{chef.name}</span>
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
+        <span className="font-semibold text-xl truncate text-slate-900">{chef.name}</span>
         <Link
           href={checkoutHref()}
-          className={`px-5 py-2 rounded-full text-sm font-semibold shrink-0 ml-4 ${
+          className={`px-6 py-2.5 rounded-full text-base font-semibold shrink-0 ml-4 transition-colors ${
             bookingsEnabled
-              ? "bg-green-600 text-white"
-              : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+              : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
           }`}
         >
-          {bookingsEnabled ? "Book Now" : "Preview Checkout"}
+          {bookingsEnabled ? "Book Now" : "Checkout"}
         </Link>
       </div>
 
@@ -163,8 +166,8 @@ export default function ChefDetailPage() {
 
         {/* Hero Image */}
         <div ref={heroRef} className="relative h-72 w-full">
-          <Image src={chef.image} alt={chef.name} fill className="object-cover rounded-b-3xl" />
-          <Link href="/" className="absolute top-4 left-4 bg-white/80 dark:bg-black/70 backdrop-blur text-black dark:text-white rounded-full px-4 py-2 text-sm font-medium shadow">
+          <Image src={chef.image} alt={chef.name} fill sizes="(min-width: 1024px) 768px, 100vw" priority className="object-cover rounded-b-3xl" />
+          <Link href="/" className="absolute top-4 left-4 bg-white/80 dark:bg-black/70 backdrop-blur text-black dark:text-white rounded-full px-4 py-2 text-base font-medium shadow">
             ← Back
           </Link>
           <button
@@ -188,25 +191,25 @@ export default function ChefDetailPage() {
 
           {/* Header */}
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-green-600 bg-green-50 dark:bg-green-950 px-3 py-1 rounded-full">
+            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
               {chef.category}
             </span>
-            <h1 className="text-4xl font-bold mt-3">{chef.name}</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <h1 className="text-4xl font-bold mt-3 text-slate-900">{chef.name}</h1>
+            <p className="text-slate-500 mt-1">
               {chef.location} • {chef.distance} • ⭐ {chef.rating} ({chef.reviews} reviews)
             </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{chef.responseTime}</p>
+            <p className="text-sm text-slate-400 mt-1">{chef.responseTime}</p>
 
             {/* Dietary tags */}
             <div className="flex flex-wrap gap-2 mt-3">
               {chef.tags.map((tag) => (
-                <span key={tag} className="text-sm px-3 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
+                <span key={tag} className="text-sm px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
                   {tag}
                 </span>
               ))}
             </div>
 
-            <p className="mt-4 text-gray-600 dark:text-gray-300 leading-relaxed">{chef.bio}</p>
+            <p className="mt-4 text-slate-600 leading-relaxed">{chef.bio}</p>
           </div>
 
           {/* Availability */}
@@ -214,14 +217,14 @@ export default function ChefDetailPage() {
             <h2 className="text-2xl font-semibold mb-3">Availability</h2>
             <div className="flex gap-2 flex-wrap">
               {chef.availability.map(({ day, available }) => (
-                <div key={day} className={`flex flex-col items-center px-3 py-2 rounded-xl text-sm font-medium ${available ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800" : "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-gray-600"}`}>
+                <div key={day} className={`flex flex-col items-center px-3 py-2 rounded-xl text-base font-medium ${available ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"}`}>
                   <span>{day}</span>
                   <span className="text-xs mt-1">{available ? "✓" : "—"}</span>
                 </div>
               ))}
             </div>
             {!bookingsEnabled && (
-              <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+              <p className="mt-3 text-sm text-amber-700">
                 Bookings are currently disabled while the marketplace is in preview mode.
               </p>
             )}
@@ -245,6 +248,7 @@ export default function ChefDetailPage() {
                 src={chef.image}
                 alt={drawerItem.name}
                 fill
+                sizes="(min-width: 768px) 640px, 100vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -314,26 +318,26 @@ export default function ChefDetailPage() {
       )}
 
       {/* Sticky bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-4 z-40">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40">
         <div className="max-w-3xl mx-auto flex gap-3">
           <Link
             href={checkoutHref()}
-            className={`flex-1 rounded-2xl py-4 font-semibold text-lg relative flex items-center justify-center ${
+            className={`flex-1 rounded-2xl py-4 font-semibold text-xl relative flex items-center justify-center transition-colors ${
               bookingsEnabled
-                ? "bg-green-600 text-white"
-                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
             }`}
           >
-            {bookingsEnabled ? "Book Now" : "Preview Checkout"}
+            {bookingsEnabled ? "Book Now" : "Checkout"}
             {cartTotal > 0 && (
-              <span className="absolute -top-2 -right-2 bg-black dark:bg-white text-white dark:text-black text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+              <span className="absolute -top-2 -right-2 bg-emerald-700 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
                 {cartTotal}
               </span>
             )}
           </Link>
           <button
             onClick={() => { setMessageOpen(true); setMessageSent(false); setMessageText(""); }}
-            className="rounded-2xl border border-gray-300 dark:border-gray-700 px-6 py-4 font-semibold"
+            className="rounded-2xl border border-emerald-200 bg-white px-6 py-4 font-semibold text-lg text-slate-700 hover:bg-emerald-50 transition-colors"
           >
             Message
           </button>

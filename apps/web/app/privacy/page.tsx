@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AnalyticsPreferenceControls from "./preference-controls";
 
 export const metadata: Metadata = {
   title: "Privacy & Cookie Policy | Cook For Me",
@@ -155,9 +156,9 @@ export default function PrivacyPage() {
             </table>
           </div>
           <p className="mt-3">
-            You can change your analytics preference at any time using the toggle in the bottom-right corner of
-            any page.
+            You can change your analytics preference at any time using the controls below.
           </p>
+          <AnalyticsPreferenceControls />
         </div>
 
         <div>

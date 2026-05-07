@@ -185,26 +185,26 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-black dark:text-white">
-      <div className="bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 px-6 py-4 sticky top-0 z-30">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               ← Home
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-compliance" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-compliance" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               Compliance
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-audit" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-audit" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               Audit Logs
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <Link href="/admin-analytics" className="text-gray-500 hover:text-black dark:hover:text-white transition text-sm">
+            <span className="text-emerald-200">|</span>
+            <Link href="/admin-analytics" className="text-slate-500 hover:text-emerald-700 transition text-sm">
               Analytics
             </Link>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <span className="text-emerald-200">|</span>
             <h1 className="font-bold text-xl">User Roles</h1>
           </div>
           <span className="text-xs font-semibold bg-black text-white dark:bg-white dark:text-black px-2.5 py-1 rounded-full">
@@ -231,21 +231,21 @@ export default function AdminUsersPage() {
         )}
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
             <p className="text-2xl font-bold">{users.length}</p>
             <p className="text-sm text-gray-500">Total Users</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">{users.filter((u) => roleEdits[u.id] === "CHEF").length}</p>
             <p className="text-sm text-gray-500">Chefs</p>
           </div>
-          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{adminCount}</p>
             <p className="text-sm text-gray-500">Admins</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-4">
+        <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div className="flex-1 min-w-0">
               <input
@@ -293,7 +293,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-emerald-100 overflow-hidden shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
           <div className="grid grid-cols-12 gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-100 dark:border-gray-900">
             <div className="col-span-1">
               <input

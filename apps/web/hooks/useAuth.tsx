@@ -22,7 +22,7 @@ type AuthContextValue = {
   user: User | null;
   accessToken: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (email: string, name: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(at);
     const me = await usersApi.me(at);
     setUser(me);
+    return me;
   }, []);
 
   // On mount: silently try to restore session via the httpOnly refresh-token cookie.
@@ -63,8 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const { accessToken: at } = await authApi.login({ email, password });
-    await applyTokens(at);
+    const me = await applyTokens(at);
     // refresh token is set as httpOnly cookie by the server — nothing to do here
+    return me;
   };
 
   const register = async (email: string, name: string, password: string) => {
