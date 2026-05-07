@@ -124,27 +124,23 @@ export default function AdminAuditPage() {
   })();
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
-      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
-              ← Home
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] dark:bg-[radial-gradient(circle_at_14%_10%,#101916_0,#0a0f0d_55%,#070b09_100%)] text-slate-900 dark:text-slate-100">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)] dark:bg-zinc-950/95 dark:border-emerald-900/60 dark:shadow-none">
+        <div className="max-w-6xl mx-auto flex flex-col gap-3">
+          <h1 className="font-bold text-lg sm:text-xl">Audit Logs</h1>
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+            <Link href="/" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
+              Home
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-compliance" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-compliance" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               Compliance
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-users" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-users" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               User Roles
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-analytics" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-analytics" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               Analytics
             </Link>
-            <span className="text-emerald-200">|</span>
-            <h1 className="font-bold text-xl">Audit Logs</h1>
           </div>
         </div>
       </div>
@@ -156,7 +152,7 @@ export default function AdminAuditPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
+        <div className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)] dark:bg-zinc-900 dark:border-emerald-900/60 dark:shadow-none">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <input
@@ -165,7 +161,7 @@ export default function AdminAuditPage() {
                 placeholder="Search action, actor, target, or details"
                 className="w-full sm:max-w-md rounded-xl border border-gray-300 dark:border-gray-700 bg-transparent px-3 py-2 text-sm"
               />
-              <span className="text-xs text-gray-500">Showing {filtered.length} of {logs.length}</span>
+              <span className="text-xs text-gray-500 dark:text-slate-400">Showing {filtered.length} of {logs.length}</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -231,7 +227,7 @@ export default function AdminAuditPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-emerald-100 overflow-hidden shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
+        <div className="bg-white rounded-2xl border border-emerald-100 overflow-hidden shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)] dark:bg-zinc-900 dark:border-emerald-900/60 dark:shadow-none">
           <div className="grid grid-cols-12 gap-3 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-100 dark:border-gray-900">
             <div className="col-span-2">When</div>
             <div className="col-span-2">Actor</div>

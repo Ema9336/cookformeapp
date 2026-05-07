@@ -582,18 +582,17 @@ export default function AdminCompliancePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] dark:bg-[radial-gradient(circle_at_14%_10%,#101916_0,#0a0f0d_55%,#070b09_100%)] text-slate-900 dark:text-slate-100">
       {/* Header */}
-      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)] dark:bg-zinc-950/95 dark:border-emerald-900/60 dark:shadow-none">
+        <div className="max-w-5xl mx-auto flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/" className="text-slate-500 dark:text-slate-400 hover:text-emerald-700 transition text-sm">
               ← Home
             </Link>
-            <span className="text-emerald-200">|</span>
-            <h1 className="font-bold text-xl">⚖️ Compliance Review</h1>
+            <h1 className="font-bold text-lg sm:text-xl">Compliance Review</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
             {counts.pending > 0 && (
               <span className="text-xs font-bold bg-amber-500 text-white px-2.5 py-1 rounded-full">
                 {counts.pending} pending
@@ -601,25 +600,25 @@ export default function AdminCompliancePage() {
             )}
             <Link
               href="/admin-users"
-              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
+              className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
             >
               User Roles
             </Link>
             <Link
               href="/admin-audit"
-              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
+              className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
             >
               Audit Logs
             </Link>
             <Link
               href="/admin-analytics"
-              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
+              className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
             >
               Analytics
             </Link>
             <Link
               href="/chef-onboarding"
-              className="text-xs text-slate-600 border border-emerald-200 bg-white px-3 py-1.5 rounded-full hover:bg-emerald-50 transition"
+              className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
             >
               + Test Onboarding
             </Link>
@@ -646,9 +645,9 @@ export default function AdminCompliancePage() {
             { label: "Approved", value: counts.approved, color: "text-green-600 dark:text-green-400" },
             { label: "Rejected / Changes", value: counts.rejected + counts.changes_requested, color: "text-red-500 dark:text-red-400" },
           ].map(({ label, value, color }) => (
-            <div key={label} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)]">
+            <div key={label} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-[0_14px_36px_-30px_rgba(6,78,59,0.5)] dark:bg-zinc-900 dark:border-emerald-900/60 dark:shadow-none">
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{label}</p>
             </div>
           ))}
         </div>
@@ -662,7 +661,7 @@ export default function AdminCompliancePage() {
               className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition border ${
                 filter === key
                   ? "bg-emerald-600 text-white border-emerald-600"
-                  : "bg-white text-slate-500 border-emerald-200 hover:border-emerald-400"
+                  : "bg-white text-slate-500 border-emerald-200 hover:border-emerald-400 dark:bg-zinc-900 dark:text-slate-300 dark:border-emerald-900"
               }`}
             >
               {label}
@@ -679,7 +678,7 @@ export default function AdminCompliancePage() {
             <button
               key={app.id}
               onClick={() => setSelected(app)}
-              className="w-full bg-white rounded-2xl border border-emerald-100 p-5 text-left hover:border-emerald-500 hover:shadow-md transition group"
+              className="w-full bg-white rounded-2xl border border-emerald-100 p-5 text-left hover:border-emerald-500 hover:shadow-md transition group dark:bg-zinc-900 dark:border-emerald-900/60 dark:hover:shadow-none"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -690,15 +689,15 @@ export default function AdminCompliancePage() {
                       {app.isBookable ? "Bookable" : "Preview"}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                     {app.city}, {app.state} · {app.serviceCategory} · {app.cuisineType}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">Submitted {formatDate(app.submittedAt)}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Submitted {formatDate(app.submittedAt)}</p>
                 </div>
 
                 <div className="shrink-0 text-right">
                   <p className={`text-2xl font-bold ${scoreColor(app.complianceScore)}`}>{app.complianceScore}</p>
-                  <p className="text-xs text-gray-400">score</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">score</p>
                 </div>
               </div>
 

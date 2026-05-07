@@ -527,34 +527,32 @@ export default function AdminAnalyticsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] text-slate-900">
-      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-6 py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-slate-500 hover:text-emerald-700 transition text-sm">
-              ← Home
+    <main className="min-h-screen bg-[radial-gradient(circle_at_14%_10%,#f7fcf9_0,#ffffff_46%,#f8fbff_100%)] dark:bg-[radial-gradient(circle_at_14%_10%,#101916_0,#0a0f0d_55%,#070b09_100%)] text-slate-900 dark:text-slate-100">
+      <div className="bg-white/95 backdrop-blur border-b border-emerald-100 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-30 shadow-[0_10px_30px_-25px_rgba(6,78,59,0.45)] dark:bg-zinc-950/95 dark:border-emerald-900/60 dark:shadow-none">
+        <div className="max-w-6xl mx-auto flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="font-bold text-lg sm:text-xl">Analytics</h1>
+            <button
+              onClick={() => void loadData()}
+              className="text-xs text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+            <Link href="/" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
+              Home
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-compliance" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-compliance" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               Compliance
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-users" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-users" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               User Roles
             </Link>
-            <span className="text-emerald-200">|</span>
-            <Link href="/admin-audit" className="text-slate-500 hover:text-emerald-700 transition text-sm">
+            <Link href="/admin-audit" className="shrink-0 text-xs text-slate-600 dark:text-slate-300 border border-emerald-200 dark:border-emerald-900 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition">
               Audit Logs
             </Link>
-            <span className="text-emerald-200">|</span>
-            <h1 className="font-bold text-xl">Analytics</h1>
           </div>
-          <button
-            onClick={() => void loadData()}
-            className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-900 transition"
-          >
-            Refresh
-          </button>
         </div>
       </div>
 
