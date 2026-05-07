@@ -212,10 +212,10 @@ const mockApplications: ChefApplication[] = [
 
 function statusBadge(status: ComplianceStatus) {
   const map: Record<ComplianceStatus, { label: string; classes: string }> = {
-    pending: { label: "Pending Review", classes: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800" },
-    approved: { label: "Approved ✓", classes: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800" },
-    changes_requested: { label: "Changes Requested", classes: "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
-    rejected: { label: "Rejected", classes: "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800" },
+    pending: { label: "Pending Review", classes: "bg-amber-100/70 dark:bg-amber-900/25 text-amber-800 dark:text-amber-200 border-amber-200/80 dark:border-amber-800/60" },
+    approved: { label: "Approved ✓", classes: "bg-emerald-100/70 dark:bg-emerald-900/25 text-emerald-800 dark:text-emerald-200 border-emerald-200/80 dark:border-emerald-800/60" },
+    changes_requested: { label: "Changes Requested", classes: "bg-sky-100/70 dark:bg-sky-900/25 text-sky-800 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/60" },
+    rejected: { label: "Rejected", classes: "bg-rose-100/70 dark:bg-rose-900/25 text-rose-800 dark:text-rose-200 border-rose-200/80 dark:border-rose-800/60" },
   };
   const { label, classes } = map[status];
   return (
@@ -224,9 +224,9 @@ function statusBadge(status: ComplianceStatus) {
 }
 
 function scoreColor(score: number) {
-  if (score >= 90) return "text-green-600 dark:text-green-400";
-  if (score >= 70) return "text-amber-600 dark:text-amber-400";
-  return "text-red-500 dark:text-red-400";
+  if (score >= 90) return "text-emerald-700 dark:text-emerald-300";
+  if (score >= 70) return "text-amber-700 dark:text-amber-300";
+  return "text-rose-600 dark:text-rose-300";
 }
 
 function formatDate(iso: string) {
@@ -382,7 +382,7 @@ function ApplicationDrawer({
             <p className="font-bold text-lg">{app.chefName}</p>
             <p className="text-sm text-gray-500">{app.city}, {app.state} · {app.serviceCategory}</p>
             <p className="text-xs mt-1">
-              <span className={`px-2 py-0.5 rounded-full font-semibold ${app.isBookable ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"}`}>
+              <span className={`px-2 py-0.5 rounded-full font-semibold ${app.isBookable ? "bg-emerald-100/70 text-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-200" : "bg-amber-100/70 text-amber-800 dark:bg-amber-900/25 dark:text-amber-200"}`}>
                 {app.isBookable ? "Bookable Live" : "Preview Only"}
               </span>
             </p>
@@ -391,7 +391,7 @@ function ApplicationDrawer({
             <button
               onClick={handleBookableToggle}
               disabled={bookableSaving}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition disabled:opacity-60 ${app.isBookable ? "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-300" : "border-green-300 text-green-700 dark:border-green-800 dark:text-green-400"}`}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition disabled:opacity-60 ${app.isBookable ? "border-amber-300/80 text-amber-800 dark:border-amber-800/60 dark:text-amber-200" : "border-emerald-300/80 text-emerald-800 dark:border-emerald-800/60 dark:text-emerald-200"}`}
             >
               {bookableSaving ? "Saving..." : app.isBookable ? "Disable Booking" : "Enable Booking"}
             </button>
@@ -420,7 +420,7 @@ function ApplicationDrawer({
             {toggleChecks.map(({ label, on, sub }) => (
               <div key={label} className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">{label} {sub && <span className="text-gray-400 text-xs">{sub}</span>}</span>
-                <span className={`font-semibold ${on ? "text-green-600 dark:text-green-400" : "text-red-400"}`}>
+                <span className={`font-semibold ${on ? "text-emerald-700 dark:text-emerald-300" : "text-rose-500 dark:text-rose-300"}`}>
                   {on ? "✓ Yes" : "✕ No"}
                 </span>
               </div>
@@ -438,8 +438,8 @@ function ApplicationDrawer({
                   key={label}
                   className={`flex items-center justify-between gap-3 p-3 rounded-xl border text-sm ${
                     file
-                      ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950"
-                      : "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950"
+                      ? "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-900/20"
+                      : "border-rose-200/80 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-900/20"
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -447,7 +447,7 @@ function ApplicationDrawer({
                     <div className="min-w-0">
                       <p className="font-medium text-xs truncate">{label}</p>
                       {file && <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{file}</p>}
-                      {!file && <p className="text-xs text-red-500">Not uploaded</p>}
+                      {!file && <p className="text-xs text-rose-600 dark:text-rose-300">Not uploaded</p>}
                     </div>
                   </div>
                   {file && (
@@ -487,21 +487,21 @@ function ApplicationDrawer({
           <button
             onClick={() => handleAction("approved")}
             disabled={saving}
-            className="py-3 rounded-2xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 transition disabled:opacity-50"
+            className="py-3 rounded-2xl bg-emerald-700 text-white font-semibold text-sm hover:bg-emerald-800 transition disabled:opacity-50"
           >
             {saving ? "…" : "✓ Approve"}
           </button>
           <button
             onClick={() => handleAction("changes_requested")}
             disabled={saving}
-            className="py-3 rounded-2xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition disabled:opacity-50"
+            className="py-3 rounded-2xl bg-sky-700 text-white font-semibold text-sm hover:bg-sky-800 transition disabled:opacity-50"
           >
             {saving ? "…" : "↩ Request Changes"}
           </button>
           <button
             onClick={() => handleAction("rejected")}
             disabled={saving}
-            className="py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition disabled:opacity-50"
+            className="py-3 rounded-2xl bg-rose-700 text-white font-semibold text-sm hover:bg-rose-800 transition disabled:opacity-50"
           >
             {saving ? "…" : "✕ Reject"}
           </button>
@@ -594,7 +594,7 @@ export default function AdminCompliancePage() {
           </div>
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
             {counts.pending > 0 && (
-              <span className="text-xs font-bold bg-amber-500 text-white px-2.5 py-1 rounded-full">
+              <span className="text-xs font-semibold bg-amber-100/80 text-amber-800 dark:bg-amber-900/25 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800/60 px-2.5 py-1 rounded-full">
                 {counts.pending} pending
               </span>
             )}
@@ -660,7 +660,7 @@ export default function AdminCompliancePage() {
               onClick={() => setFilter(key)}
               className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition border ${
                 filter === key
-                  ? "bg-emerald-600 text-white border-emerald-600"
+                  ? "bg-zinc-900 text-white border-zinc-800 dark:bg-emerald-900/35 dark:text-emerald-100 dark:border-emerald-800/60"
                   : "bg-white text-slate-500 border-emerald-200 hover:border-emerald-400 dark:bg-zinc-900 dark:text-slate-300 dark:border-emerald-900"
               }`}
             >
@@ -683,9 +683,9 @@ export default function AdminCompliancePage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-bold text-base group-hover:text-green-600 transition truncate">{app.chefName}</span>
+                    <span className="font-bold text-base group-hover:text-emerald-400 transition truncate">{app.chefName}</span>
                     {statusBadge(app.status)}
-                    <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${app.isBookable ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400" : "border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300"}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${app.isBookable ? "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200" : "border-amber-200/80 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200"}`}>
                       {app.isBookable ? "Bookable" : "Preview"}
                     </span>
                   </div>
@@ -715,8 +715,8 @@ export default function AdminCompliancePage() {
                     key={label}
                     className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${
                       on
-                        ? "border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400"
-                        : "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-500 dark:text-red-400"
+                        ? "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-200"
+                        : "border-rose-200/80 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-900/20 text-rose-700 dark:text-rose-200"
                     }`}
                   >
                     {on ? "✓" : "✕"} {label}
