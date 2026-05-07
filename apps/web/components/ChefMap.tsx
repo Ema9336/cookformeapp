@@ -1,5 +1,5 @@
 "use client";
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useEffect, useState } from 'react';
 import type { MockChef } from '../lib/mockChefs';
 
@@ -18,8 +18,10 @@ interface ChefMapProps {
 }
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || '';
 
 export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
+  const useAdvancedMarkers = Boolean(GOOGLE_MAPS_MAP_ID);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries: ['marker'],
@@ -29,6 +31,7 @@ export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
   const mapCenter = userLocation || getMapCenter(chefs);
 
   useEffect(() => {
+    if (!useAdvancedMarkers) return;
     if (!map || typeof window === 'undefined' || !window.google?.maps) return;
 
     const createdMarkers: Array<google.maps.Marker | google.maps.marker.AdvancedMarkerElement> = [];
@@ -101,7 +104,7 @@ export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
         }
       });
     };
-  }, [chefs, map, userLocation]);
+  }, [chefs, map, userLocation, useAdvancedMarkers]);
 
   if (!isLoaded) return <div>Loading Map...</div>;
 
@@ -110,8 +113,29 @@ export default function ChefMap({ chefs, userLocation }: ChefMapProps) {
       mapContainerStyle={containerStyle}
       center={mapCenter}
       zoom={12}
+      options={useAdvancedMarkers ? { mapId: GOOGLE_MAPS_MAP_ID } : undefined}
       onLoad={setMap}
       onUnmount={() => setMap(null)}
-    />
+    >
+      {!useAdvancedMarkers && userLocation && (
+        <Marker
+          position={userLocation}
+          title="You are here"
+          icon={{
+            url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+            scaledSize: typeof window !== 'undefined' && window.google && window.google.maps
+              ? new window.google.maps.Size(40, 40)
+              : undefined,
+          }}
+        />
+      )}
+      {!useAdvancedMarkers && chefs.map((chef) => (
+        <Marker
+          key={chef.id}
+          position={{ lat: chef.lat, lng: chef.lng }}
+          title={chef.name}
+        />
+      ))}
+    </GoogleMap>
   );
 }
