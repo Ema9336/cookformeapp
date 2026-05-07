@@ -140,43 +140,43 @@ export default function HomePage() {
     searchQuery || activeCategory !== "All" || activeTags.length > 0 || maxDistance < 50 || minRating > 0 || maxPrice < 500;
 
   const pillBase = "rounded-full border text-sm font-medium transition";
-  const surfaceCard = "rounded-3xl border border-emerald-100 bg-white shadow-[0_16px_40px_-30px_rgba(6,78,59,0.55)]";
+  const surfaceCard = "rounded-3xl border border-emerald-100 bg-white shadow-[0_16px_40px_-30px_rgba(6,78,59,0.55)] dark:border-emerald-900/60 dark:bg-zinc-900 dark:shadow-none";
 
   return (
-    <main className="min-h-screen bg-white text-slate-900 transition-colors">
+    <main className="min-h-screen bg-white text-slate-900 transition-colors dark:bg-[#0a0f0d] dark:text-slate-100">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-4 sm:py-6 bg-transparent border-b border-emerald-100/80 shadow-[0_8px_24px_-24px_rgba(2,44,34,0.5)]">
+      <nav className="flex items-center justify-between px-5 sm:px-10 py-4 sm:py-6 bg-transparent border-b border-emerald-100/80 shadow-[0_8px_24px_-24px_rgba(2,44,34,0.5)] dark:border-emerald-900/60 dark:shadow-none">
         <h1 className="text-2xl sm:text-3xl font-bold">Cook For Me</h1>
         <div className="flex items-center gap-2 sm:gap-4">
           {user ? (
             <>
-              <span className="hidden sm:block text-sm text-slate-600">
+              <span className="hidden sm:block text-sm text-slate-600 dark:text-slate-300">
                 Hi, {user.name.split(" ")[0]}
               </span>
-                <Link href="/bookings" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors">
+                <Link href="/bookings" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:hover:bg-emerald-950/40">
                   My Bookings
                 </Link>
               {user.role === "CHEF" && (
-                <Link href="/chef-dashboard" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors">
+                <Link href="/chef-dashboard" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:hover:bg-emerald-950/40">
                   Dashboard
                 </Link>
               )}
               {user.role === "ADMIN" && (
-                <Link href="/admin-compliance" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors">
+                <Link href="/admin-compliance" className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:hover:bg-emerald-950/40">
                   Admin
                 </Link>
               )}
               {accessToken && <NotificationBell token={accessToken} />}
               <button
                 onClick={() => logout()}
-                className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors"
+                className="px-4 py-2 text-sm rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:hover:bg-emerald-950/40"
               >
                 Log out
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors">
+              <Link href="/login" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full border border-emerald-200 bg-white hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:hover:bg-emerald-950/40">
                 Login
               </Link>
               <Link href="/chef-onboarding" className="px-4 py-2 text-sm sm:px-5 sm:text-base rounded-full bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap transition-colors">
@@ -193,7 +193,7 @@ export default function HomePage() {
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight">
             Home-cooked meals, weekly prep, and catering from trusted chefs near you.
           </h2>
-          <p className="mt-4 sm:mt-6 text-base sm:text-xl text-gray-600 dark:text-gray-300">
+          <p className="mt-4 sm:mt-6 text-base sm:text-xl text-gray-600 dark:text-slate-300">
             Search by chef name, cuisine, or dietary preference.
           </p>
 
@@ -202,17 +202,17 @@ export default function HomePage() {
             {/* Row 1: text search + filters button — always one line */}
             <div className="flex gap-2">
               <div className="relative flex-1 min-w-0">
-                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">🔍</span>
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-base">🔍</span>
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full border border-emerald-200 rounded-full pl-10 sm:pl-11 pr-8 py-3 sm:py-4 text-sm sm:text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  className="w-full border border-emerald-200 rounded-full pl-10 sm:pl-11 pr-8 py-3 sm:py-4 text-sm sm:text-base bg-white dark:bg-zinc-900 dark:border-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                   placeholder="Chefs, cuisines, dietary needs…"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm"
                   >
                     ✕
                   </button>
@@ -222,8 +222,8 @@ export default function HomePage() {
                 onClick={() => setShowFilters((v) => !v)}
                 className={`shrink-0 flex items-center gap-1.5 px-4 py-3 rounded-full border transition font-medium text-sm ${
                   showFilters || hasActiveFilters
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "border-emerald-200 hover:border-emerald-400"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    : "border-emerald-200 hover:border-emerald-400 dark:border-emerald-900"
                 }`}
               >
                 <span>⚙️</span>
@@ -239,9 +239,9 @@ export default function HomePage() {
             {/* Row 2: delivery address + Search button — always one line */}
             <div className="flex gap-2">
               <div className="relative flex-1 min-w-0">
-                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">📍</span>
+                <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-base">📍</span>
                 <input
-                  className="w-full border border-emerald-200 rounded-full pl-10 sm:pl-11 pr-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  className="w-full border border-emerald-200 rounded-full pl-10 sm:pl-11 pr-4 py-3 text-sm bg-white dark:bg-zinc-900 dark:border-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                   placeholder="Delivery address or ZIP code"
                 />
               </div>
@@ -260,7 +260,7 @@ export default function HomePage() {
                 className={`shrink-0 px-4 py-2 ${pillBase} ${
                   activeCategory === cat
                     ? "bg-emerald-600 text-white border-emerald-600"
-                    : "border-emerald-200 text-slate-600 hover:border-emerald-400"
+                    : "border-emerald-200 text-slate-600 hover:border-emerald-400 dark:border-emerald-900 dark:text-slate-300"
                 }`}
               >
                 {cat === "Meals" ? "🍽️ " : cat === "Weekly Meal Prep" ? "📦 " : cat === "Catering Platters" ? "🎉 " : ""}
@@ -283,7 +283,7 @@ export default function HomePage() {
                       className={`px-3 py-1.5 rounded-full border text-xs font-medium transition ${
                         activeTags.includes(tag)
                           ? "border-emerald-500 bg-emerald-100 text-emerald-700"
-                          : "border-emerald-200 bg-white text-slate-600"
+                          : "border-emerald-200 bg-white text-slate-600 dark:border-emerald-900 dark:bg-zinc-900 dark:text-slate-300"
                       }`}
                     >
                       {tag}
@@ -307,7 +307,7 @@ export default function HomePage() {
                     onChange={(e) => setMaxDistance(Number(e.target.value))}
                       className="w-full accent-emerald-600"
                   />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500 mt-1">
                     <span>1 mi</span>
                     <span>50 mi</span>
                   </div>
@@ -328,7 +328,7 @@ export default function HomePage() {
                       className={`px-3 py-1.5 rounded-full border text-xs font-medium transition ${
                         minRating === r
                           ? "bg-amber-100 text-amber-800 border-amber-300"
-                          : "border-emerald-200 bg-white"
+                          : "border-emerald-200 bg-white dark:border-emerald-900 dark:bg-zinc-900"
                       }`}
                     >
                       {r === 0 ? "Any" : `${r}+★`}
@@ -352,7 +352,7 @@ export default function HomePage() {
                   onChange={(e) => setMaxPrice(Number(e.target.value))}
                   className="w-full accent-emerald-600"
                 />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-gray-400 dark:text-slate-500 mt-1">
                   <span>$20</span>
                   <span>Any</span>
                 </div>
@@ -369,7 +369,7 @@ export default function HomePage() {
                       className={`px-4 py-2 rounded-full border text-xs font-medium transition ${
                         sortBy === value
                           ? "bg-emerald-600 text-white border-emerald-600"
-                          : "border-emerald-200 bg-white"
+                          : "border-emerald-200 bg-white dark:border-emerald-900 dark:bg-zinc-900"
                       }`}
                     >
                       {label}
@@ -412,7 +412,7 @@ export default function HomePage() {
                   className={`px-3 py-1.5 rounded-full border text-xs font-medium transition ${
                     sortBy === value
                       ? "bg-emerald-600 text-white border-emerald-600"
-                      : "border-emerald-200 text-slate-500 hover:border-emerald-400"
+                      : "border-emerald-200 text-slate-500 hover:border-emerald-400 dark:border-emerald-900 dark:text-slate-300"
                   }`}
                 >
                   {label}
@@ -423,11 +423,11 @@ export default function HomePage() {
         </div>
 
         {/* Location notices */}
-        {loading && <p className="text-slate-400 mb-4 text-sm">Detecting your location…</p>}
+        {loading && <p className="text-slate-400 dark:text-slate-500 mb-4 text-sm">Detecting your location…</p>}
         {error && (
           <div className="text-red-500 flex items-center gap-2 mb-4 text-sm">
             {error}
-            <button className="ml-2 px-3 py-1 rounded bg-slate-200 text-sm" onClick={retry}>
+            <button className="ml-2 px-3 py-1 rounded bg-slate-200 dark:bg-zinc-800 text-sm" onClick={retry}>
               Retry
             </button>
           </div>
@@ -444,7 +444,7 @@ export default function HomePage() {
           <div className="text-center py-24 space-y-3">
             <p className="text-5xl">🍽️</p>
             <p className="text-xl font-semibold">No chefs match your filters</p>
-            <p className="text-slate-500">Try adjusting your search or clearing some filters.</p>
+            <p className="text-slate-500 dark:text-slate-400">Try adjusting your search or clearing some filters.</p>
             <button
               onClick={clearFilters}
               className="mt-4 px-6 py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
@@ -460,7 +460,7 @@ export default function HomePage() {
                 href={`/chef/${chef.slug}`}
                 className={`block p-5 hover:border-emerald-400 hover:-translate-y-0.5 transition-all group ${surfaceCard}`}
               >
-                <div className="relative h-56 rounded-2xl bg-slate-100 mb-4 overflow-hidden">
+                <div className="relative h-56 rounded-2xl bg-slate-100 dark:bg-zinc-800 mb-4 overflow-hidden">
                   <Image
                     src={chef.image}
                     alt={chef.name}
@@ -475,12 +475,12 @@ export default function HomePage() {
                   <span className="shrink-0 text-sm font-bold text-amber-500">⭐ {chef.rating}</span>
                 </div>
 
-                <p className="text-slate-500 mt-1 text-sm">
+                <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
                   {chef.category} · {chef.location}, {chef.city}
                 </p>
 
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-slate-400 text-xs">
+                  <p className="text-slate-400 dark:text-slate-500 text-xs">
                     {chef.reviews} reviews
                   </p>
                   {chef.distance && (
@@ -493,7 +493,7 @@ export default function HomePage() {
                     {chef.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700"
+                        className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300"
                       >
                         {tag}
                       </span>
