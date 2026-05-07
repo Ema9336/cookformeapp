@@ -335,21 +335,21 @@ function CheckoutContent() {
   };
 
   const panelClass =
-    "rounded-3xl border border-emerald-100/70 bg-white/90 backdrop-blur-sm shadow-[0_18px_55px_-30px_rgba(6,78,59,0.55)]";
+    "rounded-3xl border border-emerald-100/70 bg-white/90 backdrop-blur-sm shadow-[0_18px_55px_-30px_rgba(6,78,59,0.55)] dark:border-emerald-900/60 dark:bg-zinc-900/90 dark:shadow-none";
   const fieldClass =
-    "w-full rounded-2xl border border-emerald-200 bg-white/85 p-4 focus:outline-none focus:ring-2 focus:ring-emerald-500";
+    "w-full rounded-2xl border border-emerald-200 bg-white/85 p-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-emerald-900 dark:bg-zinc-800";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] text-slate-900 pb-36">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] dark:bg-[radial-gradient(circle_at_15%_8%,#101916_0,#0a0f0d_55%,#070b09_100%)] text-slate-900 dark:text-slate-100 pb-36">
       <div className="max-w-3xl mx-auto">
 
         <div className="px-6 pt-6">
           {groups.length <= 1 ? (
-            <Link href={`/chef/${baseChef.slug}`} className="text-sm text-slate-500 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
+            <Link href={`/chef/${baseChef.slug}`} className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
               ← Back to {baseChef.name}
             </Link>
           ) : (
-            <Link href="/" className="text-sm text-slate-500 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
+            <Link href="/" className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium hover:text-emerald-700 transition-colors">
               ← Back to chefs
             </Link>
           )}
@@ -366,19 +366,19 @@ function CheckoutContent() {
               {groups.length <= 1 ? (
                 <>
                   <h2 className="text-xl font-bold">{baseChef.name}</h2>
-                  <p className="text-slate-500 text-sm">{baseChef.city} • {baseChef.distance}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{baseChef.city} • {baseChef.distance}</p>
                   <p className="text-sm mt-1">⭐ {baseChef.rating} ({baseChef.reviews} reviews)</p>
                 </>
               ) : (
                 <>
                   <h2 className="text-xl font-bold">Multi-Chef Order</h2>
-                  <p className="text-slate-500 text-sm">{groups.length} chefs in this cart</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{groups.length} chefs in this cart</p>
                   <p className="text-sm mt-1">One checkout submits separate booking requests per chef.</p>
                 </>
               )}
             </div>
             <div className="text-right">
-              <p className="text-xs text-emerald-700 font-semibold bg-emerald-100 px-2 py-1 rounded-full">✅ Licensed</p>
+              <p className="text-xs text-emerald-700 font-semibold bg-emerald-100 px-2 py-1 rounded-full dark:bg-emerald-950/30 dark:text-emerald-300">✅ Licensed</p>
             </div>
           </div>
 
@@ -395,8 +395,8 @@ function CheckoutContent() {
               </div>
               <div className="space-y-3">
                 {groups.map((group) => (
-                  <div key={group.chefSlug} className={`${panelClass} divide-y divide-emerald-100 overflow-hidden`}>
-                    <div className="px-4 py-3 bg-emerald-50/70 text-sm font-semibold">
+                  <div key={group.chefSlug} className={`${panelClass} divide-y divide-emerald-100 dark:divide-emerald-900/50 overflow-hidden`}>
+                    <div className="px-4 py-3 bg-emerald-50/70 dark:bg-emerald-950/20 text-sm font-semibold">
                       {group.chefName}
                     </div>
                     {group.items.map((item) => (
@@ -405,17 +405,17 @@ function CheckoutContent() {
                           <span className="font-medium">{item.qty}× {item.itemName}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {item.price && <span className="text-emerald-700 font-semibold text-sm mr-1">{item.price}</span>}
+                          {item.price && <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm mr-1">{item.price}</span>}
                           <button
                             onClick={() => changeItemQty(group.chefSlug, item.itemName, -1)}
-                            className="w-7 h-7 rounded-full border border-emerald-300 text-sm font-bold hover:bg-emerald-50 transition-colors"
+                            className="w-7 h-7 rounded-full border border-emerald-300 dark:border-emerald-900 text-sm font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
                             aria-label={`Decrease ${item.itemName}`}
                           >
                             -
                           </button>
                           <button
                             onClick={() => changeItemQty(group.chefSlug, item.itemName, 1)}
-                            className="w-7 h-7 rounded-full border border-emerald-300 text-sm font-bold hover:bg-emerald-50 transition-colors"
+                            className="w-7 h-7 rounded-full border border-emerald-300 dark:border-emerald-900 text-sm font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
                             aria-label={`Increase ${item.itemName}`}
                           >
                             +
@@ -454,11 +454,11 @@ function CheckoutContent() {
                 <div key={group.chefSlug} className={`${panelClass} p-4 space-y-4`}>
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-semibold">{group.chefName}</h3>
-                    <span className="text-xs text-slate-500">{group.items.reduce((sum, item) => sum + item.qty, 0)} items</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">{group.items.reduce((sum, item) => sum + item.qty, 0)} items</span>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-slate-500 px-1">Preferred Date</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Preferred Date</label>
                     <input
                       type="date"
                       value={detail.date}
@@ -468,7 +468,7 @@ function CheckoutContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-slate-500 px-1">Service Type</label>
+                    <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Service Type</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { value: "delivery", label: "🚗 Delivery" },
@@ -482,7 +482,7 @@ function CheckoutContent() {
                           className={`rounded-2xl border p-3 text-sm font-medium transition-colors ${
                             detail.serviceType === opt.value
                               ? "border-emerald-500 bg-emerald-100 text-emerald-800"
-                              : "border-emerald-200 bg-white/70 hover:bg-emerald-50"
+                              : "border-emerald-200 bg-white/70 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-zinc-800 dark:hover:bg-emerald-950/30"
                           }`}
                         >
                           {opt.label}
@@ -493,7 +493,7 @@ function CheckoutContent() {
 
                   {addressRequired && (
                     <div className="space-y-1">
-                      <label className="text-sm font-medium text-slate-500 px-1">
+                      <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">
                         {detail.serviceType === "delivery" ? "Delivery Address" : "Event Address"}
                       </label>
                       <input
@@ -510,11 +510,11 @@ function CheckoutContent() {
             })}
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500 px-1">Number of People</label>
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Number of People</label>
               <div className={`${panelClass} flex items-center gap-4 p-4`}>
                 <button
                   onClick={() => setGuestCount((n) => Math.max(1, n - 1))}
-                  className="w-9 h-9 rounded-full border border-emerald-300 flex items-center justify-center text-xl font-bold hover:bg-emerald-50 transition-colors"
+                  className="w-9 h-9 rounded-full border border-emerald-300 dark:border-emerald-900 flex items-center justify-center text-xl font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
                 >−</button>
                 <span className="flex-1 text-center font-semibold text-lg">{guestCount} {guestCount === 1 ? "person" : "people"}</span>
                 <button
@@ -529,7 +529,7 @@ function CheckoutContent() {
             <h2 className="text-xl font-semibold">Dietary & Special Requests</h2>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500 px-1">Allergies or dietary restrictions</label>
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Allergies or dietary restrictions</label>
               <input
                 type="text"
                 value={allergies}
@@ -540,7 +540,7 @@ function CheckoutContent() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-500 px-1">Additional notes</label>
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Additional notes</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -551,9 +551,9 @@ function CheckoutContent() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-amber-300 bg-amber-50/95 p-5 space-y-2 shadow-[0_18px_55px_-35px_rgba(146,64,14,0.6)]">
+          <section className="rounded-3xl border border-amber-300 bg-amber-50/95 p-5 space-y-2 shadow-[0_18px_55px_-35px_rgba(146,64,14,0.6)] dark:border-amber-900/60 dark:bg-amber-950/20 dark:shadow-none">
             <h3 className="font-semibold text-base">⚠️ Food Safety Notice</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               Menu items may contain allergens including shellfish, tree nuts, dairy, and gluten. Some meals are prepared in shared kitchen environments. Please disclose all allergies above. CookForMe verifies chef licenses but is not responsible for undisclosed dietary needs.
             </p>
             <label className="flex items-start gap-3 mt-3 cursor-pointer">
@@ -563,7 +563,7 @@ function CheckoutContent() {
                 onChange={(e) => setAgreed(e.target.checked)}
                 className="mt-1 accent-green-600 w-4 h-4"
               />
-              <span className="text-sm text-slate-700">I have read the food safety notice and disclosed all relevant allergies.</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">I have read the food safety notice and disclosed all relevant allergies.</span>
             </label>
           </section>
 
@@ -575,12 +575,12 @@ function CheckoutContent() {
                   {paymentStatusLoading ? "Checking…" : paymentStatus?.mode === "test" ? "Stripe Test Mode" : "Payments Disabled"}
                 </span>
                 {paymentStatus && (
-                  <span className="text-slate-500">
+                  <span className="text-slate-500 dark:text-slate-400">
                     {paymentStatus.bookingsEnabled ? "Bookings enabled" : "Bookings disabled"}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 {paymentStatusLoading
                   ? "Checking whether bookings and payments are currently enabled."
                   : paymentStatus?.message}
@@ -599,14 +599,14 @@ function CheckoutContent() {
             </div>
 
             {!paymentStatus?.bookingsEnabled && (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Use sample values only. This preview does not send or process any payment information.
               </p>
             )}
 
             <div className={`${panelClass} p-4 space-y-4`}>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-500 px-1">Cardholder name</label>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Cardholder name</label>
                 <input
                   type="text"
                   value={cardholderName}
@@ -617,7 +617,7 @@ function CheckoutContent() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-500 px-1">Card number</label>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Card number</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -630,7 +630,7 @@ function CheckoutContent() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500 px-1">Expiry</label>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">Expiry</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -641,7 +641,7 @@ function CheckoutContent() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-500 px-1">CVC</label>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1">CVC</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -653,20 +653,20 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-emerald-50/60 p-4 space-y-2 text-sm">
+              <div className="rounded-2xl bg-emerald-50/60 p-4 space-y-2 text-sm dark:bg-emerald-950/20">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Chefs</span>
+                  <span className="text-slate-500 dark:text-slate-400">Chefs</span>
                   <span>{groups.length || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Subtotal</span>
+                  <span className="text-slate-500 dark:text-slate-400">Subtotal</span>
                   <span>{subtotal > 0 ? `$${subtotal.toFixed(2)}` : "Calculated at payment"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Estimated service fee</span>
+                  <span className="text-slate-500 dark:text-slate-400">Estimated service fee</span>
                   <span>{subtotal > 0 ? `$${estimatedFees.toFixed(2)}` : "TBD"}</span>
                 </div>
-                <div className="flex items-center justify-between font-semibold text-base pt-1 border-t border-emerald-200">
+                <div className="flex items-center justify-between font-semibold text-base pt-1 border-t border-emerald-200 dark:border-emerald-900">
                   <span>Estimated total</span>
                   <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Shown when items have prices"}</span>
                 </div>
@@ -679,7 +679,7 @@ function CheckoutContent() {
       {previewComplete && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewComplete(false)} />
-          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-emerald-100 p-6 space-y-4 shadow-2xl">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-emerald-100 p-6 space-y-4 shadow-2xl dark:bg-zinc-900 dark:border-emerald-900">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-emerald-600">Preview Complete</p>
@@ -687,22 +687,22 @@ function CheckoutContent() {
               </div>
               <button
                 onClick={() => setPreviewComplete(false)}
-                className="w-9 h-9 rounded-full border border-emerald-300"
+                className="w-9 h-9 rounded-full border border-emerald-300 dark:border-emerald-900"
               >
                 ✕
               </button>
             </div>
 
-            <div className="rounded-2xl bg-emerald-50/60 p-4 text-sm space-y-2">
+            <div className="rounded-2xl bg-emerald-50/60 p-4 text-sm space-y-2 dark:bg-emerald-950/20">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Chefs</span>
+                <span className="text-slate-500 dark:text-slate-400">Chefs</span>
                 <span className="font-medium">{groups.length}</span>
               </div>
               {groups.map((group) => {
                 const detail = bookingDetailsByChef[group.chefSlug];
                 return (
                   <div key={`preview-${group.chefSlug}`} className="flex items-center justify-between gap-3">
-                    <span className="text-slate-500">{group.chefName}</span>
+                    <span className="text-slate-500 dark:text-slate-400">{group.chefName}</span>
                     <span className="font-medium text-right">
                       {(detail?.serviceType || DEFAULT_SERVICE_TYPE).replace("-", " ")} • {detail?.date || "No date"}
                     </span>
@@ -710,16 +710,16 @@ function CheckoutContent() {
                 );
               })}
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Card</span>
+                <span className="text-slate-500 dark:text-slate-400">Card</span>
                 <span className="font-medium">•••• {cardNumber.replace(/\D/g, "").slice(-4) || "4242"}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-emerald-200 pt-2 font-semibold">
+              <div className="flex items-center justify-between border-t border-emerald-200 dark:border-emerald-900 pt-2 font-semibold">
                 <span>Total</span>
                 <span>{subtotal > 0 ? `$${estimatedTotal.toFixed(2)}` : "Calculated at payment"}</span>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
               This is a preview only. No payment was processed, no booking was submitted, and no card data was sent to Stripe.
             </div>
 
@@ -733,7 +733,7 @@ function CheckoutContent() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40 dark:border-emerald-900/60 dark:bg-zinc-950/95">
         <div className="max-w-3xl mx-auto">
           {error && (
             <p className="text-center text-sm text-red-500 mb-2">{error}</p>
@@ -754,14 +754,14 @@ function CheckoutContent() {
                     : "Submit Booking Request"}
           </button>
           {(!agreed || hasIncompleteChefDetails) && (
-            <p className="text-center text-xs text-slate-500 mt-2">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
               {hasIncompleteChefDetails
                 ? `Finish date/service details for ${groupsMissingDetails.length} chef${groupsMissingDetails.length === 1 ? "" : "s"}`
                 : "Agree to food safety notice"} to continue
             </p>
           )}
           {paymentStatus && !paymentStatus.bookingsEnabled && agreed && !hasIncompleteChefDetails && !previewCardComplete && (
-            <p className="text-center text-xs text-slate-500 mt-2">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">
               Enter sample card details to preview the final payment step.
             </p>
           )}

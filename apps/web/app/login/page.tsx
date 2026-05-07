@@ -35,22 +35,22 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_15%_12%,#f7fcf9_0,#ffffff_42%,#f8fbff_100%)] px-4 py-10">
-      <div className="w-full max-w-md space-y-7 rounded-3xl border border-emerald-100 bg-white/95 shadow-[0_22px_60px_-36px_rgba(6,78,59,0.55)] p-6 sm:p-8">
+    <main className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_15%_12%,#f7fcf9_0,#ffffff_42%,#f8fbff_100%)] dark:bg-[radial-gradient(circle_at_15%_12%,#101916_0,#0a0f0d_55%,#070b09_100%)] px-4 py-10">
+      <div className="w-full max-w-md space-y-7 rounded-3xl border border-emerald-100 bg-white/95 shadow-[0_22px_60px_-36px_rgba(6,78,59,0.55)] p-6 sm:p-8 dark:border-emerald-900/60 dark:bg-zinc-900/95 dark:shadow-none">
         <div className="text-center">
           <span className="text-4xl">{mode === "chef" ? "👨‍🍳" : "🍽️"}</span>
-          <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome back</h1>
-          <p className="mt-1 text-slate-500 text-sm">Sign in to your Cook For Me account</p>
+          <h1 className="mt-3 text-3xl font-bold text-slate-900 dark:text-slate-100">Welcome back</h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400 text-sm">Sign in to your Cook For Me account</p>
         </div>
 
-        <div className="flex rounded-2xl border border-emerald-200 bg-emerald-50/40 p-1 gap-1">
+        <div className="flex rounded-2xl border border-emerald-200 bg-emerald-50/40 p-1 gap-1 dark:border-emerald-900 dark:bg-emerald-950/20">
           <button
             type="button"
             onClick={() => setMode("customer")}
             className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
               mode === "customer"
                 ? "bg-emerald-600 text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             }`}
           >
             🍽️ I&apos;m a Customer
@@ -61,7 +61,7 @@ export default function LoginPage() {
             className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
               mode === "chef"
                 ? "bg-emerald-600 text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             }`}
           >
             👨‍🍳 I&apos;m a Chef
@@ -76,7 +76,7 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Email
             </label>
             <input
@@ -86,13 +86,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-emerald-900 dark:bg-zinc-800 dark:text-slate-100 dark:placeholder-slate-500"
               placeholder="you@example.com"
             />
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium text-slate-700">
+            <label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Password
             </label>
             <input
@@ -102,7 +102,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-emerald-900 dark:bg-zinc-800 dark:text-slate-100 dark:placeholder-slate-500"
               placeholder="••••••••"
             />
           </div>
@@ -116,7 +116,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-emerald-600 font-medium hover:underline">
             Sign up

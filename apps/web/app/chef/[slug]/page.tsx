@@ -27,15 +27,15 @@ function MenuSection({
       <h2 className="text-2xl font-semibold mb-3">{title}</h2>
       <div className="space-y-3">
         {items.map((item) => (
-          <div key={item.name} className="rounded-2xl border border-emerald-100 bg-white/90 shadow-[0_8px_30px_-18px_rgba(6,78,59,0.45)] p-4 flex justify-between items-center">
+          <div key={item.name} className="rounded-2xl border border-emerald-100 bg-white/90 shadow-[0_8px_30px_-18px_rgba(6,78,59,0.45)] p-4 flex justify-between items-center dark:border-emerald-900/60 dark:bg-zinc-900 dark:shadow-none">
             <button className="text-left flex-1" onClick={() => onViewDetail(item)}>
               <p className="font-medium">{item.name}</p>
               {item.ingredients && (
-                <p className="text-base text-slate-400 mt-1">{item.ingredients}</p>
+                <p className="text-base text-slate-400 dark:text-slate-500 mt-1">{item.ingredients}</p>
               )}
             </button>
             <div className="flex items-center gap-3 ml-4">
-              {item.price && <span className="text-emerald-700 font-semibold text-base whitespace-nowrap">{item.price}</span>}
+              {item.price && <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-base whitespace-nowrap">{item.price}</span>}
               <button
                 onClick={() => onAdd(item)}
                 className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shrink-0 hover:bg-emerald-700 transition-colors"
@@ -140,22 +140,22 @@ export default function ChefDetailPage() {
   const bookingsEnabled = paymentStatus?.bookingsEnabled ?? false;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] text-slate-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_15%_8%,#fbfefc_0,#ffffff_42%,#fefffe_100%)] dark:bg-[radial-gradient(circle_at_15%_8%,#101916_0,#0a0f0d_55%,#070b09_100%)] text-slate-900 dark:text-slate-100">
       {/* Always-visible top nav */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
-        <Link href="/" className="text-xl font-bold text-slate-900">Cook For Me</Link>
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 dark:bg-zinc-950/90 dark:border-emerald-900/60 ${stickyVisible ? "opacity-0 -translate-y-full pointer-events-none" : "opacity-100 translate-y-0"}`}>
+        <Link href="/" className="text-xl font-bold text-slate-900 dark:text-slate-100">Cook For Me</Link>
         <Link href="/chef-onboarding" className="text-base font-semibold px-5 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">Become a Chef</Link>
       </div>
 
       {/* Sticky Header on scroll */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
-        <span className="font-semibold text-xl truncate text-slate-900">{chef.name}</span>
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-emerald-100 px-6 py-4 sm:py-5 flex items-center justify-between transition-all duration-300 dark:bg-zinc-950/90 dark:border-emerald-900/60 ${stickyVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"}`}>
+        <span className="font-semibold text-xl truncate text-slate-900 dark:text-slate-100">{chef.name}</span>
         <Link
           href={checkoutHref()}
           className={`px-6 py-2.5 rounded-full text-base font-semibold shrink-0 ml-4 transition-colors ${
             bookingsEnabled
               ? "bg-emerald-600 text-white hover:bg-emerald-700"
-              : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+              : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900"
           }`}
         >
           {bookingsEnabled ? "Book Now" : "Checkout"}
@@ -191,25 +191,25 @@ export default function ChefDetailPage() {
 
           {/* Header */}
           <div>
-            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full dark:bg-emerald-950/30 dark:text-emerald-300">
               {chef.category}
             </span>
-            <h1 className="text-4xl font-bold mt-3 text-slate-900">{chef.name}</h1>
-            <p className="text-slate-500 mt-1">
+            <h1 className="text-4xl font-bold mt-3 text-slate-900 dark:text-slate-100">{chef.name}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
               {chef.location} • {chef.distance} • ⭐ {chef.rating} ({chef.reviews} reviews)
             </p>
-            <p className="text-sm text-slate-400 mt-1">{chef.responseTime}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{chef.responseTime}</p>
 
             {/* Dietary tags */}
             <div className="flex flex-wrap gap-2 mt-3">
               {chef.tags.map((tag) => (
-                <span key={tag} className="text-sm px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">
+                <span key={tag} className="text-sm px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-300">
                   {tag}
                 </span>
               ))}
             </div>
 
-            <p className="mt-4 text-slate-600 leading-relaxed">{chef.bio}</p>
+            <p className="mt-4 text-slate-600 dark:text-slate-300 leading-relaxed">{chef.bio}</p>
           </div>
 
           {/* Availability */}
@@ -217,7 +217,7 @@ export default function ChefDetailPage() {
             <h2 className="text-2xl font-semibold mb-3">Availability</h2>
             <div className="flex gap-2 flex-wrap">
               {chef.availability.map(({ day, available }) => (
-                <div key={day} className={`flex flex-col items-center px-3 py-2 rounded-xl text-base font-medium ${available ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-400"}`}>
+                <div key={day} className={`flex flex-col items-center px-3 py-2 rounded-xl text-base font-medium ${available ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900" : "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-slate-500"}`}>
                   <span>{day}</span>
                   <span className="text-xs mt-1">{available ? "✓" : "—"}</span>
                 </div>
@@ -318,14 +318,14 @@ export default function ChefDetailPage() {
       )}
 
       {/* Sticky bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-emerald-100 bg-white/95 backdrop-blur p-4 z-40 dark:border-emerald-900/60 dark:bg-zinc-950/95">
         <div className="max-w-3xl mx-auto flex gap-3">
           <Link
             href={checkoutHref()}
             className={`flex-1 rounded-2xl py-4 font-semibold text-xl relative flex items-center justify-center transition-colors ${
               bookingsEnabled
                 ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200"
+                : "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900"
             }`}
           >
             {bookingsEnabled ? "Book Now" : "Checkout"}
@@ -337,7 +337,7 @@ export default function ChefDetailPage() {
           </Link>
           <button
             onClick={() => { setMessageOpen(true); setMessageSent(false); setMessageText(""); }}
-            className="rounded-2xl border border-emerald-200 bg-white px-6 py-4 font-semibold text-lg text-slate-700 hover:bg-emerald-50 transition-colors"
+            className="rounded-2xl border border-emerald-200 bg-white px-6 py-4 font-semibold text-lg text-slate-700 hover:bg-emerald-50 transition-colors dark:border-emerald-900 dark:bg-zinc-900 dark:text-slate-200 dark:hover:bg-emerald-950/40"
           >
             Message
           </button>
